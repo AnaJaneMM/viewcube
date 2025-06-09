@@ -9,7 +9,6 @@ from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QTabWidget,
                              QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSpinBox, QComboBox,
                              QFrame, QFileDialog, QAction, QGroupBox, QMessageBox, QDoubleSpinBox, QMenu)
 from astropy.io import fits
-
 from config import strings
 from viewcube import cubeviewer as cv
 from viewcube.qt_adapter import CubeViewerAdapter
@@ -20,14 +19,13 @@ pg.setConfigOption('foreground', 'k')
 
 def fits_file_info(file_path):
     """
-    Muestra información del archivo FITS
+    Shows a table with the info of the FITS file. The headers of the table are: 'No.', 'Name', 'Ver', 'Type',
+    'Cards', 'Dimensions' and 'Format'.
+
+    :param file_path: Path to the FITS file
+    :return: All info in String format
     """
-    info = []
-    with fits.open(file_path) as hdul:
-        info.append("Extensiones:")
-        for i, hdu in enumerate(hdul):
-            info.append(f"{i}: {hdu.__class__.__name__}, shape={hdu.data.shape if hasattr(hdu, 'data') else 'No data'}")
-    return "\n".join(info)
+    return fits.open(file_path).info()
 
 
 def file_extensions(file_path):
