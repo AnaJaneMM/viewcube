@@ -118,17 +118,24 @@ class MainWindow(QMainWindow):
         # Central widget and main layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        main_layout = QVBoxLayout(central_widget)
+        main_layout = QHBoxLayout(central_widget)  # Cambiado a horizontal
 
         # Menu
         self.setup_menu()
 
-        # Notebook (QTabWidget)
-        self.tab_widget = QTabWidget()
-        main_layout.addWidget(self.tab_widget)
+        # Configuration's frame
+        config_group = QGroupBox(strings.CONFIGURATION_FRAME)
+        config_layout = QVBoxLayout(config_group)
+        self.setup_config_panel(config_layout)
 
-        # Tab
-        self.create_first_tab()
+        # Plot's frame
+        plots_group = QGroupBox(strings.PLOTS_FRAME)
+        workspace_layout = QVBoxLayout(plots_group)
+        self.setup_workspace_panel(workspace_layout)
+
+        # Add frames to main layout
+        main_layout.addWidget(config_group, 1)
+        main_layout.addWidget(plots_group, 3)
 
         # Menu actions
         self.connect_menu_actions()
@@ -189,27 +196,6 @@ class MainWindow(QMainWindow):
         fit_action = QAction(strings.FIT_SPECTRUM, self)
         fit_action.setShortcut('Ctrl+F')
         tools_menu.addAction(fit_action)
-
-    def create_first_tab(self):
-        tab = QWidget()
-        self.tab_widget.addTab(tab, strings.DEFAULT_TAB_NAME)
-
-        # Main layout of the tab
-        tab_layout = QHBoxLayout(tab)
-
-        # Configuration's frame
-        config_group = QGroupBox(strings.CONFIGURATION_FRAME)
-        config_layout = QVBoxLayout(config_group)
-        self.setup_config_panel(config_layout)  # components
-
-        # Plot's frame
-        plots_group = QGroupBox(strings.PLOTS_FRAME)
-        workspace_layout = QVBoxLayout(plots_group)
-        self.setup_workspace_panel(workspace_layout)  # components
-
-        # Add frames to main layout
-        tab_layout.addWidget(config_group, 1)
-        tab_layout.addWidget(plots_group, 3)
 
     def setup_config_panel(self, layout):
         # FITS File Path
