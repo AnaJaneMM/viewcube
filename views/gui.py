@@ -25,7 +25,13 @@ def fits_file_info(file_path):
     :param file_path: Path to the FITS file
     :return: All info in String format
     """
-    return fits.open(file_path).info()
+    info = []
+    with fits.open(file_path) as hdul:
+        info.append("Extensiones:")
+        for i, hdu in enumerate(hdul):
+            shape_str = str(hdu.data.shape) if hasattr(hdu, 'data') and hdu.data is not None else 'No data'
+            info.append(f"{i}: {hdu.__class__.__name__}, shape={shape_str}")
+    return "\n".join(info)
 
 
 def file_extensions(file_path):
@@ -51,7 +57,7 @@ class PlotWidget(QWidget):
         # Series de datos
         self.series = None
         
-    def clear(self):
+    def clear_graph(self):
         """Limpia el gráfico"""
         self.chart.clear()
         self.series = None
@@ -59,7 +65,7 @@ class PlotWidget(QWidget):
     def plot(self, x, y, color=Qt.blue, clear=True):
         """Dibuja una serie de datos"""
         if clear:
-            self.clear()
+            self.clear_graph()
             
         # Crear nueva serie
         self.series = pg.PlotDataItem(x=x, y=y, pen=pg.mkPen(color))
@@ -84,7 +90,7 @@ class SpaxelWidget(PlotWidget):
     def plot_spaxel(self, data, clear=True):
         """Dibuja el spaxel"""
         if clear:
-            self.clear()
+            self.clear_graph()
             
         # Crear serie para la imagen
         self.series = pg.PlotDataItem(x=np.arange(data.shape[1]), y=data[0], pen=None)
@@ -378,8 +384,8 @@ class MainWindow(QMainWindow):
 
         # Limpiar gráficos
         if self.cube_adapter:
-            self.cube_adapter.spaxel_widget.clear()
-            self.cube_adapter.spectrum_widget.clear()
+            self.cube_adapter.spaxel_widget.clear_graph()
+            self.cube_adapter.spectrum_widget.clear_graph()
 
         # Resetear título
         self.setWindowTitle(strings.WINDOW_TITLE)
