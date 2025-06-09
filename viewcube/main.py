@@ -1,3 +1,4 @@
+"""Módulo principal de ViewCube para visualización de datos astronómicos."""
 ############################################################################
 #                            VIEW-CUBE/RSS                                 #
 #                               PYTHON 3                                   #
@@ -10,7 +11,6 @@
 ################################ VERSION ###################################
 VERSION = "0.0.7"                                                          #
 ############################################################################
-#
 """
  Author: Ruben Garcia-Benito (RGB)
  """
@@ -24,6 +24,7 @@ import os
 
 def main():
 
+    """Función principal que gestiona la ejecución de ViewCube."""
     # List of matplotlib backends
     list_backends = matplotlib.rcsetup.interactive_bk
     slist_backends = " | ".join(list_backends)
@@ -74,7 +75,7 @@ def main():
     )
     parser.add_argument("name", type=str, help="FITS file", nargs="*")
     args = parser.parse_args()
-    
+
     # Config File
     if args.configFile:
         cfgfile = vc.viewcuberc
@@ -87,11 +88,11 @@ def main():
     if args.v:
         print ('ViewCube version: %s' % version.__version__)
         sys.exit()
-    
+
     # Exception arguments
     if args.name is None or len(args.name) < 1:
         sys.exit(parser.print_usage())
-    
+
     # Matplotlib Backend
     if args.b not in list_backends:
         print('*** Backend "%s" NOT available ***' % args.b)
@@ -101,9 +102,10 @@ def main():
         matplotlib.use(args.b)
 
     # Multiplicative factor
-    fc = float(eval(args.fc))
-    fo = float(eval(args.fo))
-    
+    #Reemplazar por conversión directa (siempre que args.fc/fo sean numéricos)
+    fc = float(args.fc) if args.fc else 1.0
+    fo = float(args.fo) if args.fo else 1.0
+
     # Read Config File
     vc.GetConfig(vc.defaultDictParams)
     if args.w != None:
@@ -111,7 +113,7 @@ def main():
             vc.defaultDictParams["exwave"] = int(args.w)
         except:
             vc.defaultDictParams["exwave"] = args.w
-    
+
     # LoadFits options
     vc.defaultDictParams["specaxis"] = args.s
     vc.defaultDictParams["exdata"] = args.data
@@ -121,25 +123,25 @@ def main():
     vc.defaultDictParams["masked"] = args.m
     vc.defaultDictParams["skycoord"] = args.k
     vc.defaultDictParams["sensf"] = args.f
-    
+
     if args.y is not None:
         import matplotlib.pyplot as plt
-    
+
         styles = args.y.split(",")
         plt.style.use(styles)
-    
+
     if args.p is None:
         from viewcube.cubeviewer_old import CubeViewer
-    
+
         lkey = ["angle", "skycoord"]
         for key in lkey:
             if key in vc.defaultDictParams:
                 del vc.defaultDictParams[key]
         CV = CubeViewer(args.name[0], fitscom=args.c, fc=fc, fo=fo, ivar=args.i, **vc.defaultDictParams)
-    
+
     else:
         from viewcube.viewrss import RSSViewer
-    
+
         lkey = [
             "exdata",
             "exwave",
