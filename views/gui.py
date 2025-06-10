@@ -527,20 +527,18 @@ class MainWindow(QMainWindow):
 
     def on_search_comparison(self):
         """Method event linked to the search of a comparison FITS file."""
-        file_path, _ = QFileDialog.getOpenFileName(self, strings.SEARCH_COMPARISSON_FITS_MSG, "", strings.SEARCH_ALL_FILES)
+        file_path, _ = QFileDialog.getOpenFileName(self, strings.SEARCH_COMPARISSON_FITS_MSG, "", strings.SEARCH_FITS_FILTER)
         if file_path:
             try:
-                self.comparison_cube = file_path
-                
                 # update cube if another cube is already loaded
                 if self.cube:
-                    self.cube.fitscom = self.comparison_cube
+                    self.comp_file_name_box.setText(os.path.basename(file_path))
+                    print(os.path.basename(file_path))
                     self.load_fits_file(self.cube.name_fits)
                 
                 QMessageBox.information(self, strings.GENERIC_SUCCESS_TITLE, strings.COMPARISON_FILE_LOADED)
             except Exception as e:
                 QMessageBox.critical(self, strings.GENERIC_ERROR_TITLE, strings.ERROR_LOADING_COMPARISON_FITS_FILE + str(e))
-                self.comparison_cube = None
 
     def update_cube_parameters(self):
         """Actualiza los parámetros del cubo cuando cambian los controles"""
