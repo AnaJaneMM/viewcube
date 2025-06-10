@@ -7,9 +7,10 @@ import pyqtgraph as pg
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QTabWidget,
                              QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSpinBox, QComboBox,
-                             QFrame, QFileDialog, QAction, QGroupBox, QMessageBox, QDoubleSpinBox, QMenu)
+                             QFrame, QFileDialog, QAction, QGroupBox, QMessageBox, QDoubleSpinBox, QMenu, QSizePolicy,
+                             QLineEdit, QCheckBox)
 from astropy.io import fits
-from config import strings
+from config import strings, styles
 from viewcube import cubeviewer as cv
 from viewcube.qt_adapter import CubeViewerAdapter
 
@@ -105,6 +106,13 @@ class SpaxelWidget(PlotWidget):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.btn_search_comp_fits = None
+        self.comp_file_name_box = None
+        self.btn_search_table = None
+        self.position_table_box = None
+        self.file_name_box = None
+        self.btn_search_fits = None
+        self.angle_rotation_value = None
         self.cube = None
         self.cube_adapter = None
         self.data = None
@@ -118,17 +126,26 @@ class MainWindow(QMainWindow):
         # Central widget and main layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        main_layout = QVBoxLayout(central_widget)
+        main_layout = QHBoxLayout(central_widget)  # Cambiado a horizontal
 
         # Menu
         self.setup_menu()
 
-        # Notebook (QTabWidget)
-        self.tab_widget = QTabWidget()
-        main_layout.addWidget(self.tab_widget)
+        # Configuration's frame
+        config_group = QGroupBox(strings.CONFIGURATION_FRAME)
+        config_layout = QVBoxLayout(config_group)
+        config_layout.setAlignment(Qt.AlignTop)
+        self.setup_config_panel(config_layout)
+        config_group.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
 
-        # Tab
-        self.create_first_tab()
+        # Plot's frame
+        plots_group = QGroupBox(strings.PLOTS_FRAME)
+        workspace_layout = QVBoxLayout(plots_group)
+        self.setup_workspace_panel(workspace_layout)
+
+        # Add frames to main layout
+        main_layout.addWidget(config_group, 1)
+        main_layout.addWidget(plots_group, 3)
 
         # Menu actions
         self.connect_menu_actions()
@@ -190,124 +207,231 @@ class MainWindow(QMainWindow):
         fit_action.setShortcut('Ctrl+F')
         tools_menu.addAction(fit_action)
 
-    def create_first_tab(self):
-        tab = QWidget()
-        self.tab_widget.addTab(tab, strings.DEFAULT_TAB_NAME)
-
-        # Main layout of the tab
-        tab_layout = QHBoxLayout(tab)
-
-        # Configuration's frame
-        config_group = QGroupBox(strings.CONFIGURATION_FRAME)
-        config_layout = QVBoxLayout(config_group)
-        self.setup_config_panel(config_layout)  # components
-
-        # Plot's frame
-        plots_group = QGroupBox(strings.PLOTS_FRAME)
-        workspace_layout = QVBoxLayout(plots_group)
-        self.setup_workspace_panel(workspace_layout)  # components
-
-        # Add frames to main layout
-        tab_layout.addWidget(config_group, 1)
-        tab_layout.addWidget(plots_group, 3)
-
     def setup_config_panel(self, layout):
         # FITS File Path
-        file_layout = QHBoxLayout()
-        file_layout.addWidget(QLabel(strings.LABEL_FILE_PATH))
-        self.btn_search_fits = QPushButton(strings.BUTTON_FILE_PATH)
+        file_group_box = QGroupBox()
+        file_group_box.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        #file_group_box.setStyleSheet(styles.GROUP_BOX_NO_BORDER)
+        file_layout = QVBoxLayout(file_group_box)
+        file_line_btn_layout = QHBoxLayout()
+        self.file_name_box = QLineEdit()
+        self.btn_search_fits = QPushButton(strings.GENERIC_SEARCH_BUTTON)
         self.btn_search_fits.clicked.connect(self.on_search_fits)
-        file_layout.addWidget(self.btn_search_fits)
+        self.btn_search_fits.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        file_layout.addWidget(QLabel(strings.LABEL_FILE_PATH))
+        file_line_btn_layout.addWidget(self.file_name_box)
+        file_line_btn_layout.addWidget(self.btn_search_fits)
+        file_layout.addLayout(file_line_btn_layout)
         
-        # Mostrar ruta del archivo seleccionado
-        self.fits_path_label = QLabel("")
-        file_layout.addWidget(self.fits_path_label)
-        
-        layout.addLayout(file_layout)
-        
-        # Tabla de posiciones
-        pos_table_layout = QHBoxLayout()
-        pos_table_layout.addWidget(QLabel('Tabla de posiciones externa para RSS Viewer'))
-        self.btn_search_table = QPushButton("Buscar tabla")
+        # Position table RSS only
+        position_table_group_box = QGroupBox()
+        position_table_group_box.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        #position_table_group_box.setStyleSheet(styles.GROUP_BOX_NO_BORDER)
+        pos_table_layout = QVBoxLayout(position_table_group_box)
+        pos_line_btn_layout = QHBoxLayout()
+        self.position_table_box = QLineEdit()
+        self.btn_search_table = QPushButton(strings.GENERIC_SEARCH_BUTTON)
         self.btn_search_table.clicked.connect(self.on_search_table)
-        pos_table_layout.addWidget(self.btn_search_table)
-        layout.addLayout(pos_table_layout)
+        self.btn_search_table.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        pos_table_layout.addWidget(QLabel(strings.EXTERNAL_POSITION_TABLE))
+        pos_line_btn_layout.addWidget(self.position_table_box)
+        pos_line_btn_layout.addWidget(self.btn_search_table)
+        pos_table_layout.addLayout(pos_line_btn_layout)
+
         
         # Fichero FITS de comparación
-        comp_file_layout = QHBoxLayout()
-        comp_file_layout.addWidget(QLabel('Fichero FITS de comparación'))
-        self.btn_search_comp = QPushButton("Buscar archivo")
-        self.btn_search_comp.clicked.connect(self.on_search_comparison)
-        comp_file_layout.addWidget(self.btn_search_comp)
-        layout.addLayout(comp_file_layout)
-        
+        comp_file_group_box = QGroupBox()
+        comp_file_group_box.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        # comp_file_group_box.setStyleSheet(styles.GROUP_BOX_NO_BORDER)
+        comp_file_layout = QVBoxLayout(comp_file_group_box)
+        comp_file_line_btn_layout = QHBoxLayout()
+        self.comp_file_name_box = QLineEdit()
+        self.btn_search_comp_fits = QPushButton(strings.GENERIC_SEARCH_BUTTON)
+        self.btn_search_comp_fits.clicked.connect(self.on_search_comparison)
+        self.btn_search_comp_fits.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        comp_file_layout.addWidget(QLabel(strings.COMPARISON_FITS_FILE))
+        comp_file_line_btn_layout.addWidget(self.comp_file_name_box)
+        comp_file_line_btn_layout.addWidget(self.btn_search_comp_fits)
+        comp_file_layout.addLayout(comp_file_line_btn_layout)
+        # layout.addLayout(comp_file_layout) # no borrar
+
+
+        #Extension group
+        extension_group = QGroupBox()
+        extension_layout = QVBoxLayout(extension_group)
+
         # DATA extension
         data_ext_layout = QHBoxLayout()
-        data_ext_layout.addWidget(QLabel('DATA extension (default: None)'))
+        data_ext_layout.addWidget(QLabel(strings.DATA_EXTENSION))
         self.data_ext_spin = QSpinBox()
+        self.data_ext_spin.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        self.data_ext_spin.setToolTip(strings.DATA_EXTENSION_TOOL_TIP)
         self.data_ext_spin.setRange(0, 100)
         data_ext_layout.addWidget(self.data_ext_spin)
-        layout.addLayout(data_ext_layout)
         
         # ERROR extension
         error_ext_layout = QHBoxLayout()
-        error_ext_layout.addWidget(QLabel('ERROR extension (default: None)'))
+        error_ext_layout.addWidget(QLabel(strings.ERROR_EXTENSION))
         self.error_ext_spin = QSpinBox()
         self.error_ext_spin.setRange(0, 100)
+        self.error_ext_spin.setToolTip(strings.ERROR_EXTENSION_TOOL_TIP)
+        self.error_ext_spin.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         error_ext_layout.addWidget(self.error_ext_spin)
-        layout.addLayout(error_ext_layout)
         
         # FLAG/MASK extension
         flag_ext_layout = QHBoxLayout()
-        flag_ext_layout.addWidget(QLabel('FLAG/MASK extension (default: None)'))
+        flag_ext_layout.addWidget(QLabel(strings.FLAG_EXTENSION))
         self.flag_ext_spin = QSpinBox()
         self.flag_ext_spin.setRange(0, 100)
+        self.flag_ext_spin.setToolTip(strings.FLAG_EXTENSION_TOOL_TIP)
+        self.flag_ext_spin.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         flag_ext_layout.addWidget(self.flag_ext_spin)
-        layout.addLayout(flag_ext_layout)
         
         # HEADER extension
         header_ext_layout = QHBoxLayout()
-        header_ext_layout.addWidget(QLabel('HEADER extension (default: 0)'))
+        header_ext_layout.addWidget(QLabel(strings.HEADER_EXTENSION))
         self.header_ext_spin = QSpinBox()
         self.header_ext_spin.setRange(0, 100)
         self.header_ext_spin.setValue(0)
+        self.header_ext_spin.setToolTip(strings.HEADER_EXTENSION_TOOL_TIP)
+        self.header_ext_spin.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         header_ext_layout.addWidget(self.header_ext_spin)
-        layout.addLayout(header_ext_layout)
-        
-        # Factor de multiplicación original
+
+        # configure extension layout
+        extension_layout.addLayout(data_ext_layout)
+        extension_layout.addLayout(error_ext_layout)
+        extension_layout.addLayout(flag_ext_layout)
+        extension_layout.addLayout(header_ext_layout)
+
+        # Rotation angle
+        angle_layout = QHBoxLayout()
+        self.angle_rotation_value = QDoubleSpinBox()
+        self.angle_rotation_value.setRange(0, 360)
+        self.angle_rotation_value.setValue(0)
+        self.angle_rotation_value.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        self.angle_rotation_value.setToolTip(strings.ROTATION_ANGLE_TOOL_TIP)
+        angle_layout.addWidget(QLabel(strings.ROTATION_ANGLE))
+        angle_layout.addWidget(self.angle_rotation_value)
+
+        # Sensitivity
+        sensitivity_layout = QHBoxLayout()
+        self.sensitivity_value = QComboBox() #  store_false event
+        self.sensitivity_value.addItems(["False", "True"])
+        self.sensitivity_value.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        self.sensitivity_value.setToolTip(strings.SENSITIVITY_TOOL_TIP)
+        sensitivity_layout.addWidget(QLabel(strings.SENSITIVITY))
+        sensitivity_layout.addWidget(self.sensitivity_value)
+
+        # Original multiplicative factor
         fo_factor_layout = QHBoxLayout()
-        fo_factor_layout.addWidget(QLabel('Multiplicative factor for original file'))
+        fo_factor_layout.addWidget(QLabel(strings.ORIGINAL_MULTIPLICATIVE_FACTOR))
         self.fo_factor_spin = QDoubleSpinBox()
         self.fo_factor_spin.setRange(0, 100)
         self.fo_factor_spin.setSingleStep(0.1)
         self.fo_factor_spin.setValue(1.0)
+        self.fo_factor_spin.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        self.fo_factor_spin.setToolTip(strings.ORIGINAL_MULTIPLICATIVE_FACTOR_TOOL_TIP)
         fo_factor_layout.addWidget(self.fo_factor_spin)
-        layout.addLayout(fo_factor_layout)
         
-        # Factor de multiplicación comparación
+        # comparison file multiplicative factor
         fc_factor_layout = QHBoxLayout()
-        fc_factor_layout.addWidget(QLabel('Multiplicative factor for comparison file'))
+        fc_factor_layout.addWidget(QLabel(strings.COMPARISON_MULTIPLICATIVE_FACTOR))
         self.fc_factor_spin = QDoubleSpinBox()
         self.fc_factor_spin.setRange(0, 100)
         self.fc_factor_spin.setSingleStep(0.1)
         self.fc_factor_spin.setValue(1.0)
+        self.fc_factor_spin.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        self.fc_factor_spin.setToolTip(strings.COMPARISON_MULTIPLICATIVE_FACTOR_TOOL_TIP)
         fc_factor_layout.addWidget(self.fc_factor_spin)
-        layout.addLayout(fc_factor_layout)
         
         # IVAR to error checkbox
         ivar_layout = QHBoxLayout()
-        ivar_layout.addWidget(QLabel('Conversion from IVAR to error'))
+        ivar_layout.addWidget(QLabel(strings.IVAR_TO_ERROR))
         self.ivar_combo = QComboBox()
+        self.ivar_combo.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        self.ivar_combo.setToolTip(strings.IVAR_TO_ERROR_TOOL_TIP)
         self.ivar_combo.addItems(["False", "True"])
         ivar_layout.addWidget(self.ivar_combo)
-        layout.addLayout(ivar_layout)
-        
+
+        # X,Y instead of masked arrays
+        m_layout = QHBoxLayout()
+        m_layout.addWidget(QLabel('X/Y instead of masked arrays'))
+        self.m_checkbox = QCheckBox()
+        self.m_checkbox.setChecked(False)
+        self.m_checkbox.setToolTip('Do NOT use masked arrays for flagged values')
+        self.m_checkbox.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        m_layout.addWidget(self.m_checkbox)
+
+        # External position table
+        p_layout = QHBoxLayout()
+        p_layout.addWidget(QLabel("External position table for RSS Viewer"))
+        self.p_lineedit = QLineEdit()
+        self.p_lineedit.setPlaceholderText("Ruta a la tabla de posiciones")
+        p_layout.addWidget(self.p_lineedit)
+
+        # Dimensión espectral
+        s_layout = QHBoxLayout()
+        s_layout.addWidget(QLabel("Spectral dimension"))
+        self.s_spinbox = QSpinBox()
+        self.s_spinbox.setMinimum(0)
+        self.s_spinbox.setMaximum(10000)
+        self.s_spinbox.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        s_layout.addWidget(self.s_spinbox)
+
+        # Plot style
+        y_layout = QHBoxLayout()
+        y_layout.addWidget(QLabel("Plot style (comma-separated)"))
+        self.y_lineedit = QLineEdit()
+        self.y_lineedit.setPlaceholderText("dark_background, seaborn-ticks")
+        self.y_lineedit.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        y_layout.addWidget(self.y_lineedit)
+
+        # Print version
+        v_layout = QHBoxLayout()
+        v_layout.addWidget(QLabel("Print version"))
+        self.v_checkbox = QCheckBox()
+        self.v_checkbox.setChecked(False)
+        v_layout.addWidget(self.v_checkbox)
+
+        # HDU number
+        w_layout = QHBoxLayout()
+        w_layout.addWidget(QLabel("HDU number extension for the wavelength array"))
+        self.w_lineedit = QLineEdit()
+        self.w_lineedit.setPlaceholderText("Número de extensión HDU")
+        w_layout.addWidget(self.w_lineedit)
+
+        # config file
+        config_file_layout = QHBoxLayout()
+        config_file_layout.addWidget(QLabel("Write config file"))
+        self.config_file_checkbox = QCheckBox()
+        self.config_file_checkbox.setChecked(False)
+        config_file_layout.addWidget(self.config_file_checkbox)
+
         # Botón de carga
         load_layout = QHBoxLayout()
         self.btn_load = QPushButton("Cargar")
         self.btn_load.clicked.connect(self.on_load_clicked)
         self.btn_load.setEnabled(False)  # Deshabilitado hasta que se seleccione un archivo
         load_layout.addWidget(self.btn_load)
+        # layout.addLayout(load_layout) # no borrar
+
+        # Adding the widgets in a certain order
+        layout.addWidget(file_group_box)
+        layout.addWidget(extension_group)
+        layout.addLayout(angle_layout)
+        layout.addWidget(comp_file_group_box)
+        layout.addWidget(position_table_group_box)
+        layout.addLayout(sensitivity_layout)
+        layout.addLayout(fo_factor_layout) #
+        layout.addLayout(fc_factor_layout)
+        layout.addLayout(ivar_layout)
+        layout.addLayout(m_layout)
+        layout.addLayout(p_layout)
+        layout.addLayout(s_layout)
+        layout.addLayout(y_layout)
+        layout.addLayout(v_layout)
+        layout.addLayout(w_layout)
+        layout.addLayout(config_file_layout)
         layout.addLayout(load_layout)
 
     def setup_workspace_panel(self, layout):
@@ -403,16 +527,11 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Error", "Primero debe cargar un archivo FITS")
 
     def on_search_fits(self):
-        """Maneja el evento de búsqueda de archivo FITS"""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Seleccionar archivo FITS",
-            "",
-            "FITS files (*.fits *.fit)"
-        )
+        """Method event linked to the search of a FITS file."""
+        file_path, _ = QFileDialog.getOpenFileName(self, strings.SEARCH_FITS_MSG, "", strings.SEARCH_FITS_FILTER)
         if file_path:
             self.selected_fits_file = file_path
-            self.fits_path_label.setText(os.path.basename(file_path))
+            self.file_name_box.setText(os.path.basename(file_path))
             self.btn_load.setEnabled(True)
     
     def on_load_clicked(self):
@@ -481,49 +600,37 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Error", "Por favor, seleccione un archivo FITS primero")
 
     def on_search_table(self):
-        """Maneja el evento de búsqueda de tabla de posiciones"""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Seleccionar tabla de posiciones",
-            "",
-            "All Files (*.*)"
-        )
+        file_path, _ = QFileDialog.getOpenFileName(self, strings.SEARCH_POSITION_TABLE_MSG, "", strings.SEARCH_ALL_FILES)
         if file_path:
             try:
-                # Cargar la tabla de posiciones
-                self.position_table = file_path
+                self.position_table = file_path     # load position table
 
-                # Si hay un cubo cargado, actualizarlo con la nueva tabla
+                # update with new table if cube is loading
                 if self.cube:
                     self.cube.ptable = self.position_table
                     self.update_visualizations()
 
-                QMessageBox.information(self, "Éxito", "Tabla de posiciones cargada correctamente")
+                QMessageBox.information(self, strings.GENERIC_SUCCESS_TITLE, strings.POSITION_TABLE_LOADED)
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Error al cargar la tabla de posiciones: {str(e)}")
+                QMessageBox.critical(self, strings.GENERIC_ERROR_TITLE, strings.ERROR_LOADING_POS_TABLE + str(e))
 
     def on_search_comparison(self):
-        """Maneja el evento de búsqueda de archivo FITS de comparación"""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Seleccionar archivo FITS de comparación",
-            "",
-            "FITS files (*.fits *.fit)"
-        )
+        """Method event linked to the search of a comparison FITS file."""
+        file_path, _ = QFileDialog.getOpenFileName(self, strings.SEARCH_COMPARISSON_FITS_MSG, "", strings.SEARCH_FITS_FILTER)
         if file_path:
             try:
-                # Guardar la referencia al archivo de comparación
                 self.comparison_cube = file_path
-                
-                # Si hay un cubo cargado, actualizarlo con el nuevo archivo de comparación
+
+                # update cube if another cube is already loaded
                 if self.cube:
                     self.cube.fitscom = self.comparison_cube
-                    # Recargar el cubo para actualizar la comparación
+                    self.comp_file_name_box.setText(os.path.basename(file_path))
+                    print(os.path.basename(file_path))
                     self.load_fits_file(self.cube.name_fits)
                 
-                QMessageBox.information(self, "Éxito", "Archivo de comparación cargado correctamente")
+                QMessageBox.information(self, strings.GENERIC_SUCCESS_TITLE, strings.COMPARISON_FILE_LOADED)
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Error al cargar el archivo de comparación: {str(e)}")
+                QMessageBox.critical(self, strings.GENERIC_ERROR_TITLE, strings.ERROR_LOADING_COMPARISON_FITS_FILE + str(e))
                 self.comparison_cube = None
 
     def update_cube_parameters(self):
