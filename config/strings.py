@@ -41,6 +41,10 @@ LABEL_NO_FILE = "Archivo actual: ninguno"
 EXTERNAL_POSITION_TABLE = 'Tabla de posiciones externa para RSS Viewer'
 ANGLE_ROTATION = 'Angle to rotate the position table (only RSS)'
 COMPARISON_FITS_FILE = 'Fichero FITS de comparación'
+DATA_EXTENSION = 'DATA extension (default: None)'
+ERROR_EXTENSION = 'ERROR extension (default: None)'
+FLAG_EXTENSION = 'FLAG/MASK extension (default: None)'
+HEADER_EXTENSION = 'HEADER extension (default: 0)'
 
 # Messages
 ERROR_NO_DATA = "No se pudieron leer datos del archivo FITS"

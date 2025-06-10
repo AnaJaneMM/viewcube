@@ -252,39 +252,50 @@ class MainWindow(QMainWindow):
         comp_file_line_btn_layout.addWidget(self.btn_search_comp_fits)
         comp_file_layout.addLayout(comp_file_line_btn_layout)
         # layout.addLayout(comp_file_layout) # no borrar
-        
+
+
+        #Extension group
+        extension_group = QGroupBox()
+        extension_layout = QVBoxLayout(extension_group)
+
         # DATA extension
         data_ext_layout = QHBoxLayout()
-        data_ext_layout.addWidget(QLabel('DATA extension (default: None)'))
+        data_ext_layout.addWidget(QLabel(strings.DATA_EXTENSION))
         self.data_ext_spin = QSpinBox()
+        self.data_ext_spin.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         self.data_ext_spin.setRange(0, 100)
         data_ext_layout.addWidget(self.data_ext_spin)
-        # layout.addLayout(data_ext_layout) # no borrar
         
         # ERROR extension
         error_ext_layout = QHBoxLayout()
-        error_ext_layout.addWidget(QLabel('ERROR extension (default: None)'))
+        error_ext_layout.addWidget(QLabel(strings.ERROR_EXTENSION))
         self.error_ext_spin = QSpinBox()
         self.error_ext_spin.setRange(0, 100)
+        self.error_ext_spin.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         error_ext_layout.addWidget(self.error_ext_spin)
-        # layout.addLayout(error_ext_layout) # no borrar
         
         # FLAG/MASK extension
         flag_ext_layout = QHBoxLayout()
-        flag_ext_layout.addWidget(QLabel('FLAG/MASK extension (default: None)'))
+        flag_ext_layout.addWidget(QLabel(strings.FLAG_EXTENSION))
         self.flag_ext_spin = QSpinBox()
         self.flag_ext_spin.setRange(0, 100)
+        self.flag_ext_spin.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         flag_ext_layout.addWidget(self.flag_ext_spin)
-        # layout.addLayout(flag_ext_layout) # no borrar
         
         # HEADER extension
         header_ext_layout = QHBoxLayout()
-        header_ext_layout.addWidget(QLabel('HEADER extension (default: 0)'))
+        header_ext_layout.addWidget(QLabel(strings.HEADER_EXTENSION))
         self.header_ext_spin = QSpinBox()
         self.header_ext_spin.setRange(0, 100)
         self.header_ext_spin.setValue(0)
+        self.header_ext_spin.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         header_ext_layout.addWidget(self.header_ext_spin)
-        # layout.addLayout(header_ext_layout) # no borrar
+
+        # configure extension layout
+        extension_layout.addLayout(data_ext_layout)
+        extension_layout.addLayout(error_ext_layout)
+        extension_layout.addLayout(flag_ext_layout)
+        extension_layout.addLayout(header_ext_layout)
 
         # Rotation angle
         angle_layout = QVBoxLayout()
@@ -334,14 +345,11 @@ class MainWindow(QMainWindow):
 
         # Adding the widgets in a certain order
         layout.addWidget(file_group_box)
-        layout.addLayout(data_ext_layout)
-        layout.addLayout(error_ext_layout)
-        layout.addLayout(flag_ext_layout)
-        layout.addLayout(header_ext_layout)
+        layout.addWidget(extension_group)
         layout.addLayout(angle_layout)
         layout.addWidget(comp_file_group_box)
         layout.addWidget(position_table_group_box)
-        layout.addLayout(fo_factor_layout)
+        layout.addLayout(fo_factor_layout) #
         layout.addLayout(fc_factor_layout)
         layout.addLayout(ivar_layout)
         layout.addLayout(load_layout)
@@ -531,8 +539,11 @@ class MainWindow(QMainWindow):
         file_path, _ = QFileDialog.getOpenFileName(self, strings.SEARCH_COMPARISSON_FITS_MSG, "", strings.SEARCH_FITS_FILTER)
         if file_path:
             try:
+                self.comparison_cube = file_path
+
                 # update cube if another cube is already loaded
                 if self.cube:
+                    self.cube.fitscom = self.comparison_cube
                     self.comp_file_name_box.setText(os.path.basename(file_path))
                     print(os.path.basename(file_path))
                     self.load_fits_file(self.cube.name_fits)
@@ -540,6 +551,7 @@ class MainWindow(QMainWindow):
                 QMessageBox.information(self, strings.GENERIC_SUCCESS_TITLE, strings.COMPARISON_FILE_LOADED)
             except Exception as e:
                 QMessageBox.critical(self, strings.GENERIC_ERROR_TITLE, strings.ERROR_LOADING_COMPARISON_FITS_FILE + str(e))
+                self.comparison_cube = None
 
     def update_cube_parameters(self):
         """Actualiza los parámetros del cubo cuando cambian los controles"""
