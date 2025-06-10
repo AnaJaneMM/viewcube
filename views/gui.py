@@ -312,17 +312,19 @@ class MainWindow(QMainWindow):
         self.sensitivity_value.addItem("True")
         self.sensitivity_value.addItem("False")
         self.sensitivity_value.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
-        self.sensitivity_value.setToolTip(strings.SENSITIVITY_HINT)
+        self.sensitivity_value.setToolTip(strings.SENSITIVITY_TOOL_TIP)
         sensitivity_layout.addWidget(QLabel(strings.SENSITIVITY))
         sensitivity_layout.addWidget(self.sensitivity_value)
 
-        # Factor de multiplicación original
+        # Original multiplicative factor
         fo_factor_layout = QHBoxLayout()
-        fo_factor_layout.addWidget(QLabel('Multiplicative factor for original file'))
+        fo_factor_layout.addWidget(QLabel(strings.ORIGINAL_MULTIPLICATIVE_FACTOR))
         self.fo_factor_spin = QDoubleSpinBox()
         self.fo_factor_spin.setRange(0, 100)
         self.fo_factor_spin.setSingleStep(0.1)
         self.fo_factor_spin.setValue(1.0)
+        self.fo_factor_spin.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        self.fo_factor_spin.setToolTip(strings.ORIGINAL_MULTIPLICATIVE_FACTOR_HELP)
         fo_factor_layout.addWidget(self.fo_factor_spin)
         
         # Factor de multiplicación comparación

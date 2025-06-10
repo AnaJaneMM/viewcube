@@ -46,7 +46,9 @@ ERROR_EXTENSION = 'ERROR extension (default: None)'
 FLAG_EXTENSION = 'FLAG/MASK extension (default: None)'
 HEADER_EXTENSION = 'HEADER extension (default: 0)'
 SENSITIVITY = 'Sensitivity curve'
-SENSITIVITY_HINT = 'Do NOT apply sensitivity curve (if HDU is available)'
+SENSITIVITY_TOOL_TIP = 'Do NOT apply sensitivity curve (if HDU is available)'
+ORIGINAL_MULTIPLICATIVE_FACTOR = 'Original multiplicative factor'
+ORIGINAL_MULTIPLICATIVE_FACTOR_HELP = 'Multiplicative factor for the original file'
 
 # Messages
 ERROR_NO_DATA = "No se pudieron leer datos del archivo FITS"
