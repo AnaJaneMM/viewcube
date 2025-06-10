@@ -49,6 +49,10 @@ SENSITIVITY = 'Sensitivity curve'
 SENSITIVITY_TOOL_TIP = 'Do NOT apply sensitivity curve (if HDU is available)'
 ORIGINAL_MULTIPLICATIVE_FACTOR = 'Original multiplicative factor'
 ORIGINAL_MULTIPLICATIVE_FACTOR_HELP = 'Multiplicative factor for the original file'
+COMPARISON_MULTIPLICATIVE_FACTOR = 'Comparison multiplicative factor'
+COMPARISON_MULTIPLICATIVE_FACTOR_HELP = 'Multiplicative factor for the comparison file'
+IVAR_TO_ERROR = 'IVAR to Error'
+IVAR_TO_ERROR_HELP = 'Conversion from IVAR to error'
 
 # Messages
 ERROR_NO_DATA = "No se pudieron leer datos del archivo FITS"

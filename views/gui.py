@@ -309,8 +309,7 @@ class MainWindow(QMainWindow):
         # Sensitivity
         sensitivity_layout = QHBoxLayout()
         self.sensitivity_value = QComboBox() #  store_false event
-        self.sensitivity_value.addItem("True")
-        self.sensitivity_value.addItem("False")
+        self.sensitivity_value.addItems(["False", "True"])
         self.sensitivity_value.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         self.sensitivity_value.setToolTip(strings.SENSITIVITY_TOOL_TIP)
         sensitivity_layout.addWidget(QLabel(strings.SENSITIVITY))
@@ -327,23 +326,25 @@ class MainWindow(QMainWindow):
         self.fo_factor_spin.setToolTip(strings.ORIGINAL_MULTIPLICATIVE_FACTOR_HELP)
         fo_factor_layout.addWidget(self.fo_factor_spin)
         
-        # Factor de multiplicación comparación
+        # comparison file multiplicative factor
         fc_factor_layout = QHBoxLayout()
-        fc_factor_layout.addWidget(QLabel('Multiplicative factor for comparison file'))
+        fc_factor_layout.addWidget(QLabel(strings.COMPARISON_MULTIPLICATIVE_FACTOR))
         self.fc_factor_spin = QDoubleSpinBox()
         self.fc_factor_spin.setRange(0, 100)
         self.fc_factor_spin.setSingleStep(0.1)
         self.fc_factor_spin.setValue(1.0)
+        self.fc_factor_spin.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        self.fc_factor_spin.setToolTip(strings.COMPARISON_MULTIPLICATIVE_FACTOR_HELP)
         fc_factor_layout.addWidget(self.fc_factor_spin)
-        # layout.addLayout(fc_factor_layout) # no borrar
         
         # IVAR to error checkbox
         ivar_layout = QHBoxLayout()
-        ivar_layout.addWidget(QLabel('Conversion from IVAR to error'))
+        ivar_layout.addWidget(QLabel(strings.IVAR_TO_ERROR))
         self.ivar_combo = QComboBox()
+        self.ivar_combo.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        self.ivar_combo.setToolTip(strings.IVAR_TO_ERROR_HELP)
         self.ivar_combo.addItems(["False", "True"])
         ivar_layout.addWidget(self.ivar_combo)
-        # layout.addLayout(ivar_layout) # no borrar
         
         # Botón de carga
         load_layout = QHBoxLayout()
