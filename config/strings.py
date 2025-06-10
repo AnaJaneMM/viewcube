@@ -9,7 +9,9 @@ SPAXEL_FRAME_NAME = "Spaxel Viewer"
 
 # Configuration for explorer
 SEARCH_FITS_MSG = 'Seleccionar fichero FITS'
+SEARCH_POSITION_TABLE_MSG = 'Seleccionar tabla de posiciones'
 SEARCH_FITS_FILTER = 'FITS files (*.fits *.fit)'
+SEARCH_ALL_FILES = 'All Files (*.*)'
 
 # Menu bar text
 FILE_MENU = "Archivo"
@@ -35,6 +37,7 @@ LABEL_FILE_PATH = "Fichero FITS principal"
 GENERIC_SEARCH_BUTTON = 'Buscar'
 BUTTON_SELECT_FILES = "Seleccionar archivos"
 LABEL_NO_FILE = "Archivo actual: ninguno"
+EXTERNAL_POSITION_TABLE = 'Tabla de posiciones externa para RSS Viewer'
 ANGLE_ROTATION = 'Angle to rotate the position table (only RSS)'
 
 # Messages
@@ -51,3 +54,10 @@ SPECTRUM_REGION = "Espectro promedio de región ({},{}) a ({},{})"
 LABEL_CHANNEL = "Canal"
 LABEL_INTENSITY = "Intensidad"
 
+# Information messages
+GENERIC_SUCCESS_TITLE = 'Exito'
+POSITION_TABLE_LOADED = 'Tabla de posiciones cargada correctamente'
+
+# Error messages
+GENERIC_ERROR_TITLE = 'Error'
+ERROR_LOADING_POS_TABLE = 'Error al cargar la tabla de posiciones: '

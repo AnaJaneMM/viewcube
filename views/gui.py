@@ -106,6 +106,8 @@ class SpaxelWidget(PlotWidget):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.btn_search_table = None
+        self.position_table_box = None
         self.file_name_box = None
         self.btn_search_fits = None
         self.angle_rotation_value = None
@@ -204,25 +206,32 @@ class MainWindow(QMainWindow):
     def setup_config_panel(self, layout):
         # FITS File Path
         file_group_box = QGroupBox()
-        file_group_box.setStyleSheet(styles.FITS_FILE_GROUP_BOX_NO_BORDER)
+        file_group_box.setStyleSheet(styles.GROUP_BOX_NO_BORDER)
         file_layout = QVBoxLayout(file_group_box)
-        line_btn_layout = QHBoxLayout()
+        file_line_btn_layout = QHBoxLayout()
         self.file_name_box = QLineEdit()
         self.btn_search_fits = QPushButton(strings.GENERIC_SEARCH_BUTTON)
         self.btn_search_fits.clicked.connect(self.on_search_fits)
         self.btn_search_fits.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         file_layout.addWidget(QLabel(strings.LABEL_FILE_PATH))
-        line_btn_layout.addWidget(self.file_name_box)
-        line_btn_layout.addWidget(self.btn_search_fits)
-        file_layout.addLayout(line_btn_layout)
+        file_line_btn_layout.addWidget(self.file_name_box)
+        file_line_btn_layout.addWidget(self.btn_search_fits)
+        file_layout.addLayout(file_line_btn_layout)
         
-        # Tabla de posiciones
-        pos_table_layout = QHBoxLayout()
-        pos_table_layout.addWidget(QLabel('Tabla de posiciones externa para RSS Viewer'))
-        self.btn_search_table = QPushButton("Buscar tabla")
+        # Position table RSS only
+        position_table_group_box = QGroupBox()
+        position_table_group_box.setStyleSheet(styles.GROUP_BOX_NO_BORDER)
+        pos_table_layout = QVBoxLayout(position_table_group_box)
+        pos_line_btn_layout = QHBoxLayout()
+        self.position_table_box = QLineEdit()
+        self.btn_search_table = QPushButton(strings.GENERIC_SEARCH_BUTTON)
         self.btn_search_table.clicked.connect(self.on_search_table)
-        pos_table_layout.addWidget(self.btn_search_table)
-        layout.addLayout(pos_table_layout)
+        self.btn_search_table.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        pos_table_layout.addWidget(QLabel(strings.EXTERNAL_POSITION_TABLE))
+        pos_line_btn_layout.addWidget(self.position_table_box)
+        pos_line_btn_layout.addWidget(self.btn_search_table)
+        pos_table_layout.addLayout(pos_line_btn_layout)
+
         
         # Fichero FITS de comparación
         comp_file_layout = QHBoxLayout()
@@ -230,7 +239,7 @@ class MainWindow(QMainWindow):
         self.btn_search_comp = QPushButton("Buscar archivo")
         self.btn_search_comp.clicked.connect(self.on_search_comparison)
         comp_file_layout.addWidget(self.btn_search_comp)
-        layout.addLayout(comp_file_layout)
+        # layout.addLayout(comp_file_layout) # no borrar
         
         # DATA extension
         data_ext_layout = QHBoxLayout()
@@ -318,6 +327,8 @@ class MainWindow(QMainWindow):
         layout.addLayout(flag_ext_layout)
         layout.addLayout(header_ext_layout)
         layout.addLayout(angle_layout)
+        layout.addLayout(comp_file_layout)
+        layout.addWidget(position_table_group_box)
         layout.addLayout(fo_factor_layout)
         layout.addLayout(fc_factor_layout)
         layout.addLayout(ivar_layout)
@@ -488,26 +499,19 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Error", "Por favor, seleccione un archivo FITS primero")
 
     def on_search_table(self):
-        """Maneja el evento de búsqueda de tabla de posiciones"""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Seleccionar tabla de posiciones",
-            "",
-            "All Files (*.*)"
-        )
+        file_path, _ = QFileDialog.getOpenFileName(self, strings.SEARCH_POSITION_TABLE_MSG, "", strings.SEARCH_ALL_FILES)
         if file_path:
             try:
-                # Cargar la tabla de posiciones
-                self.position_table = file_path
+                self.position_table = file_path     # load position table
 
-                # Si hay un cubo cargado, actualizarlo con la nueva tabla
+                # update with new table if cube is loading
                 if self.cube:
                     self.cube.ptable = self.position_table
                     self.update_visualizations()
 
-                QMessageBox.information(self, "Éxito", "Tabla de posiciones cargada correctamente")
+                QMessageBox.information(self, strings.GENERIC_SUCCESS_TITLE, strings.POSITION_TABLE_LOADED)
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Error al cargar la tabla de posiciones: {str(e)}")
+                QMessageBox.critical(self, strings.GENERIC_ERROR_TITLE, strings.ERROR_LOADING_POS_TABLE + str(e))
 
     def on_search_comparison(self):
         """Maneja el evento de búsqueda de archivo FITS de comparación"""
