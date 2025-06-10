@@ -9,25 +9,24 @@
 #
 ################################ VERSION ###################################
 VERSION = "0.3.6"                                                          #
-############################################################################
-#
-from matplotlib.collections import PatchCollection, PolyCollection
-from .utils import lsfiles, ckfiles, LoadFits, image_max_pixel
-from .utils import save_spec, convert2iraf_spec, get_min_max
-from matplotlib.widgets import RectangleSelector
-from matplotlib.patches import Circle, Rectangle
-from setuptools._distutils.version import LooseVersion
-import astropy.io.fits as pyfits
-from matplotlib import rcParams
+import itertools
+import os
+import random
+import string
+import sys
+
+import numpy as np
 from astropy import units as u
 from astropy.wcs import WCS
-import matplotlib, sys, os
-import numpy as np
-import itertools
-import argparse
-import string
-import random
-import math
+from matplotlib import rcParams
+############################################################################
+#
+from matplotlib.widgets import RectangleSelector
+from setuptools._distutils.version import LooseVersion
+
+from utils import LoadFits, ckfiles, image_max_pixel, lsfiles
+
+from .utils import convert2iraf_spec, get_min_max, save_spec
 
 # Check module "pyraf"
 try:
@@ -47,9 +46,10 @@ try:
 except:
     PYSPEC = False
 
-# Last pylab modules to import (after pyraf)
-from .rgbmpl import rnorm, IntColorMap
 import matplotlib.pyplot as plt
+
+# Last pylab modules to import (after pyraf)
+from .rgbmpl import IntColorMap, rnorm
 
 # ------------------------------------------------------------------------
 
@@ -175,7 +175,7 @@ def PRectangle(x, y, r):
 # ------------------------------------------------------------------------
 def tmpName(prefix="tmp", char=8, suffix="fits"):
     schar = "".join(random.choice(string.letters + string.digits) for i in range(char))
-    return "%s_%s.%s" % (prefix, schar, suffix)
+    return f"{prefix}_{schar}.{suffix}"
 
 
 # ------------------------------------------------------------------------
@@ -301,7 +301,7 @@ class CubeViewer:
         rcParams["keymap.pan"] = ""
 
         # Version
-        self.version = "CubeViewer version: %s" % VERSION
+        self.version = f"CubeViewer version: {VERSION}"
 
         # Set variables
         self.name_fits = name_fits
@@ -726,7 +726,7 @@ class CubeViewer:
 
         ix, fx = sorted([ix, fx])
         iy, fy = sorted([iy, fy])
-        si = itertools.product(np.arange(ix, fx), np.arange(iy, fy))
+        itertools.product(np.arange(ix, fx), np.arange(iy, fy))
 
         # TODO
         # self.ax.add_collection(PatchCollection(self.r,alpha=0.1))
@@ -926,7 +926,7 @@ class CubeViewer:
             self.awlmin, self.awlmax = GetLambdaLimits((self.wl, self.wl2), 0.05, wlim=self.wlim)
         else:
             self.awlmin, self.awlmax = GetLambdaLimits((self.wl, self.wl2), 0.05, wlim=eval(lm))
-        print("*** Lambda limits set to: (%6.1f, %6.1f) ***" % (self.awlmin, self.awlmax))
+        print(f"*** Lambda limits set to: ({self.awlmin:6.1f}, {self.awlmax:6.1f}) ***")
         self.ax2.set_xlim((self.awlmin, self.awlmax))
         self.fig2.canvas.draw()
 
@@ -938,7 +938,7 @@ class CubeViewer:
             pass
         else:
             self.fmin, self.fmax = GetFluxLimits(eval(lm))
-            print("*** Flux limits set to: (%s, %s) ***" % (self.fmin, self.fmax))
+            print(f"*** Flux limits set to: ({self.fmin}, {self.fmax}) ***")
             self.ax2.set_ylim((self.fmin, self.fmax))
             self.fig2.canvas.draw()
 
@@ -1482,7 +1482,7 @@ class CubeViewer:
         else:
             self.spec = self.intspec
             self.espec = self.eintspec
-        stit = "Spaxel ID = %s" % stit
+        stit = f"Spaxel ID = {stit}"
         self.ax2.set_title(stit, ha="left", position=(0.35, 1), color=col)
         self.fig2.canvas.draw()
 
@@ -1539,7 +1539,7 @@ class CubeViewer:
                     self.color = newprop
                     self.updateAx1(False)
                 else:
-                    print('Nothing to plot! Property "%s" not found' % lm.strip())
+                    print(f'Nothing to plot! Property "{lm.strip()}" not found')
 
     def updateAx1(self, color=True):
         self.fig.clf()
@@ -1620,7 +1620,7 @@ class CubeViewer:
             aspect="auto",
             origin="lower",
         )
-        ipr = IntColorMap(pr)
+        IntColorMap(pr)
         self.ax4.set_ylabel("# Zone")
         self.ax5 = self.fig4.add_axes([0.09, 0.1, 0.81, 0.15])
         self.ax5.plot(self.wl, self.K.tres)
@@ -1692,7 +1692,7 @@ class CubeViewer:
                 else:
                     lzy, lzx = np.where(self.zones == int(zn))
                     if lzy.size < 1 or lzx.size < 1:
-                        print("*** No available ZONE with ID: %i ***" % int(zn))
+                        print(f"*** No available ZONE with ID: {int(zn)} ***")
                         return
                     else:
                         for ix, iy in self.list:
@@ -1749,9 +1749,9 @@ class CubeViewer:
                         ".".join(self.name_fits.split(".")[0:-1]),
                         "%s_%s" % (ix, iy),
                     )
-                    tmpfits = tmpName(prefix="tmp_%s" % sname)
+                    tmpfits = tmpName(prefix=f"tmp_{sname}")
                     convert2iraf_spec(tmpfits, self.wl, self.spec, title=sname)
-                    print(">>> Spectrum (%s) of %s" % (self.idl, self.name_fits))
+                    print(f">>> Spectrum ({self.idl}) of {self.name_fits}")
                     splot(tmpfits)
                     if os.path.exists(tmpfits):
                         os.remove(tmpfits)
@@ -1762,12 +1762,12 @@ class CubeViewer:
                 sp.plotter()
                 sp.plotter.axis.set_xlabel(r"Wavelength $(\AA)$")
                 sp.plotter.axis.set_ylabel(r"Flux $(\mathrm{erg/s/cm^2/\AA})$")
-                sp.plotter.axis.set_title("%s (%s, %s)" % (sp.plotter.title, ix, iy))
+                sp.plotter.axis.set_title(f"{sp.plotter.title} ({ix}, {iy})")
                 plt.show()
 
     def WindowManager(self):
-        from matplotlib.widgets import CheckButtons, Slider, Button, RadioButtons
         from matplotlib import gridspec
+        from matplotlib.widgets import (Button, Slider)
 
         if not plt.fignum_exists(3):
             self.fig3 = plt.figure(3, self.winman_size)
