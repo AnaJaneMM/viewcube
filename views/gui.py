@@ -8,7 +8,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QTabWidget,
                              QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSpinBox, QComboBox,
                              QFrame, QFileDialog, QAction, QGroupBox, QMessageBox, QDoubleSpinBox, QMenu, QSizePolicy,
-                             QLineEdit)
+                             QLineEdit, QCheckBox)
 from astropy.io import fits
 from config import strings, styles
 from viewcube import cubeviewer as cv
@@ -352,7 +352,16 @@ class MainWindow(QMainWindow):
         self.ivar_combo.setToolTip(strings.IVAR_TO_ERROR_TOOL_TIP)
         self.ivar_combo.addItems(["False", "True"])
         ivar_layout.addWidget(self.ivar_combo)
-        
+
+        # X,Y instead of masked arrays
+        m_layout = QHBoxLayout()
+        m_layout.addWidget(QLabel('X/Y instead of masked arrays'))
+        self.m_checkbox = QCheckBox()
+        self.m_checkbox.setChecked(False)
+        self.m_checkbox.setToolTip('Do NOT use masked arrays for flagged values')
+        self.m_checkbox.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        m_layout.addWidget(self.m_checkbox)
+
         # Botón de carga
         load_layout = QHBoxLayout()
         self.btn_load = QPushButton("Cargar")
@@ -371,6 +380,7 @@ class MainWindow(QMainWindow):
         layout.addLayout(fo_factor_layout) #
         layout.addLayout(fc_factor_layout)
         layout.addLayout(ivar_layout)
+        layout.addLayout(m_layout)
         layout.addLayout(load_layout)
 
     def setup_workspace_panel(self, layout):
