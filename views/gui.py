@@ -206,7 +206,8 @@ class MainWindow(QMainWindow):
     def setup_config_panel(self, layout):
         # FITS File Path
         file_group_box = QGroupBox()
-        file_group_box.setStyleSheet(styles.GROUP_BOX_NO_BORDER)
+        file_group_box.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        #file_group_box.setStyleSheet(styles.GROUP_BOX_NO_BORDER)
         file_layout = QVBoxLayout(file_group_box)
         file_line_btn_layout = QHBoxLayout()
         self.file_name_box = QLineEdit()
@@ -220,7 +221,8 @@ class MainWindow(QMainWindow):
         
         # Position table RSS only
         position_table_group_box = QGroupBox()
-        position_table_group_box.setStyleSheet(styles.GROUP_BOX_NO_BORDER)
+        position_table_group_box.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        #position_table_group_box.setStyleSheet(styles.GROUP_BOX_NO_BORDER)
         pos_table_layout = QVBoxLayout(position_table_group_box)
         pos_line_btn_layout = QHBoxLayout()
         self.position_table_box = QLineEdit()
