@@ -263,6 +263,7 @@ class MainWindow(QMainWindow):
         data_ext_layout.addWidget(QLabel(strings.DATA_EXTENSION))
         self.data_ext_spin = QSpinBox()
         self.data_ext_spin.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        self.data_ext_spin.setToolTip(strings.DATA_EXTENSION_TOOL_TIP)
         self.data_ext_spin.setRange(0, 100)
         data_ext_layout.addWidget(self.data_ext_spin)
         
@@ -271,6 +272,7 @@ class MainWindow(QMainWindow):
         error_ext_layout.addWidget(QLabel(strings.ERROR_EXTENSION))
         self.error_ext_spin = QSpinBox()
         self.error_ext_spin.setRange(0, 100)
+        self.error_ext_spin.setToolTip(strings.ERROR_EXTENSION_TOOL_TIP)
         self.error_ext_spin.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         error_ext_layout.addWidget(self.error_ext_spin)
         
@@ -279,6 +281,7 @@ class MainWindow(QMainWindow):
         flag_ext_layout.addWidget(QLabel(strings.FLAG_EXTENSION))
         self.flag_ext_spin = QSpinBox()
         self.flag_ext_spin.setRange(0, 100)
+        self.flag_ext_spin.setToolTip(strings.FLAG_EXTENSION_TOOL_TIP)
         self.flag_ext_spin.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         flag_ext_layout.addWidget(self.flag_ext_spin)
         
@@ -288,6 +291,7 @@ class MainWindow(QMainWindow):
         self.header_ext_spin = QSpinBox()
         self.header_ext_spin.setRange(0, 100)
         self.header_ext_spin.setValue(0)
+        self.header_ext_spin.setToolTip(strings.HEADER_EXTENSION_TOOL_TIP)
         self.header_ext_spin.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         header_ext_layout.addWidget(self.header_ext_spin)
 
@@ -303,7 +307,8 @@ class MainWindow(QMainWindow):
         self.angle_rotation_value.setRange(0, 360)
         self.angle_rotation_value.setValue(0)
         self.angle_rotation_value.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
-        angle_layout.addWidget(QLabel(strings.ANGLE_ROTATION))
+        self.angle_rotation_value.setToolTip(strings.ROTATION_ANGLE_TOOL_TIP)
+        angle_layout.addWidget(QLabel(strings.ROTATION_ANGLE))
         angle_layout.addWidget(self.angle_rotation_value)
 
         # Sensitivity
@@ -323,7 +328,7 @@ class MainWindow(QMainWindow):
         self.fo_factor_spin.setSingleStep(0.1)
         self.fo_factor_spin.setValue(1.0)
         self.fo_factor_spin.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
-        self.fo_factor_spin.setToolTip(strings.ORIGINAL_MULTIPLICATIVE_FACTOR_HELP)
+        self.fo_factor_spin.setToolTip(strings.ORIGINAL_MULTIPLICATIVE_FACTOR_TOOL_TIP)
         fo_factor_layout.addWidget(self.fo_factor_spin)
         
         # comparison file multiplicative factor
@@ -334,7 +339,7 @@ class MainWindow(QMainWindow):
         self.fc_factor_spin.setSingleStep(0.1)
         self.fc_factor_spin.setValue(1.0)
         self.fc_factor_spin.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
-        self.fc_factor_spin.setToolTip(strings.COMPARISON_MULTIPLICATIVE_FACTOR_HELP)
+        self.fc_factor_spin.setToolTip(strings.COMPARISON_MULTIPLICATIVE_FACTOR_TOOL_TIP)
         fc_factor_layout.addWidget(self.fc_factor_spin)
         
         # IVAR to error checkbox
@@ -342,7 +347,7 @@ class MainWindow(QMainWindow):
         ivar_layout.addWidget(QLabel(strings.IVAR_TO_ERROR))
         self.ivar_combo = QComboBox()
         self.ivar_combo.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
-        self.ivar_combo.setToolTip(strings.IVAR_TO_ERROR_HELP)
+        self.ivar_combo.setToolTip(strings.IVAR_TO_ERROR_TOOL_TIP)
         self.ivar_combo.addItems(["False", "True"])
         ivar_layout.addWidget(self.ivar_combo)
         

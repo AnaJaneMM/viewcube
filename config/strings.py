@@ -39,20 +39,30 @@ GENERIC_SEARCH_BUTTON = 'Buscar'
 BUTTON_SELECT_FILES = "Seleccionar archivos"
 LABEL_NO_FILE = "Archivo actual: ninguno"
 EXTERNAL_POSITION_TABLE = 'Tabla de posiciones externa para RSS Viewer'
-ANGLE_ROTATION = 'Angle to rotate the position table (only RSS)'
 COMPARISON_FITS_FILE = 'Fichero FITS de comparación'
-DATA_EXTENSION = 'DATA extension (default: None)'
-ERROR_EXTENSION = 'ERROR extension (default: None)'
-FLAG_EXTENSION = 'FLAG/MASK extension (default: None)'
-HEADER_EXTENSION = 'HEADER extension (default: 0)'
+
+DATA_EXTENSION = 'Data extension'
+DATA_EXTENSION_TOOL_TIP = 'DATA extension (default: None)'
+
+ERROR_EXTENSION = 'Error extension'
+ERROR_EXTENSION_TOOL_TIP = 'ERROR extension (default: None)'
+
+FLAG_EXTENSION = 'Flag/Mask extension'
+FLAG_EXTENSION_TOOL_TIP = 'FLAG/MASK extension (default: None)'
+
+HEADER_EXTENSION = 'Header extension'
+HEADER_EXTENSION_TOOL_TIP = 'HEADER extension (default: 0)'
+
+ROTATION_ANGLE = 'Rotation angle'
+ROTATION_ANGLE_TOOL_TIP = 'Angle to rotate the position table (only RSS)'
 SENSITIVITY = 'Sensitivity curve'
 SENSITIVITY_TOOL_TIP = 'Do NOT apply sensitivity curve (if HDU is available)'
 ORIGINAL_MULTIPLICATIVE_FACTOR = 'Original multiplicative factor'
-ORIGINAL_MULTIPLICATIVE_FACTOR_HELP = 'Multiplicative factor for the original file'
+ORIGINAL_MULTIPLICATIVE_FACTOR_TOOL_TIP = 'Multiplicative factor for the original file'
 COMPARISON_MULTIPLICATIVE_FACTOR = 'Comparison multiplicative factor'
-COMPARISON_MULTIPLICATIVE_FACTOR_HELP = 'Multiplicative factor for the comparison file'
+COMPARISON_MULTIPLICATIVE_FACTOR_TOOL_TIP = 'Multiplicative factor for the comparison file'
 IVAR_TO_ERROR = 'IVAR to Error'
-IVAR_TO_ERROR_HELP = 'Conversion from IVAR to error'
+IVAR_TO_ERROR_TOOL_TIP = 'Conversion from IVAR to error'
 
 # Messages
 ERROR_NO_DATA = "No se pudieron leer datos del archivo FITS"
