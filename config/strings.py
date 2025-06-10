@@ -31,6 +31,7 @@ LABEL_FILE_PATH = "FITS File Path"
 BUTTON_FILE_PATH = "Buscar fichero"
 BUTTON_SELECT_FILES = "Seleccionar archivos"
 LABEL_NO_FILE = "Archivo actual: ninguno"
+ANGLE_ROTATION = 'Angle to rotate the position table (only RSS)'
 
 # Messages
 ERROR_NO_DATA = "No se pudieron leer datos del archivo FITS"

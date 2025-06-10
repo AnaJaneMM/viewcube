@@ -105,6 +105,7 @@ class SpaxelWidget(PlotWidget):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.angle_rotation_value = None
         self.cube = None
         self.cube_adapter = None
         self.data = None
@@ -209,7 +210,7 @@ class MainWindow(QMainWindow):
         self.fits_path_label = QLabel("")
         file_layout.addWidget(self.fits_path_label)
         
-        layout.addLayout(file_layout)
+        # layout.addLayout(file_layout) # no borrar
         
         # Tabla de posiciones
         pos_table_layout = QHBoxLayout()
@@ -233,7 +234,7 @@ class MainWindow(QMainWindow):
         self.data_ext_spin = QSpinBox()
         self.data_ext_spin.setRange(0, 100)
         data_ext_layout.addWidget(self.data_ext_spin)
-        layout.addLayout(data_ext_layout)
+        # layout.addLayout(data_ext_layout) # no borrar
         
         # ERROR extension
         error_ext_layout = QHBoxLayout()
@@ -241,7 +242,7 @@ class MainWindow(QMainWindow):
         self.error_ext_spin = QSpinBox()
         self.error_ext_spin.setRange(0, 100)
         error_ext_layout.addWidget(self.error_ext_spin)
-        layout.addLayout(error_ext_layout)
+        # layout.addLayout(error_ext_layout) # no borrar
         
         # FLAG/MASK extension
         flag_ext_layout = QHBoxLayout()
@@ -249,7 +250,7 @@ class MainWindow(QMainWindow):
         self.flag_ext_spin = QSpinBox()
         self.flag_ext_spin.setRange(0, 100)
         flag_ext_layout.addWidget(self.flag_ext_spin)
-        layout.addLayout(flag_ext_layout)
+        # layout.addLayout(flag_ext_layout) # no borrar
         
         # HEADER extension
         header_ext_layout = QHBoxLayout()
@@ -258,8 +259,18 @@ class MainWindow(QMainWindow):
         self.header_ext_spin.setRange(0, 100)
         self.header_ext_spin.setValue(0)
         header_ext_layout.addWidget(self.header_ext_spin)
-        layout.addLayout(header_ext_layout)
-        
+        # layout.addLayout(header_ext_layout) # no borrar
+
+        # Rotation angle
+        angle_layout = QVBoxLayout()
+        self.angle_rotation_value = QDoubleSpinBox()
+        self.angle_rotation_value.setRange(0, 360)
+        self.angle_rotation_value.setValue(0)
+        angle_layout.addWidget(QLabel(strings.ANGLE_ROTATION))
+        angle_layout.addWidget(self.angle_rotation_value)
+
+
+
         # Factor de multiplicación original
         fo_factor_layout = QHBoxLayout()
         fo_factor_layout.addWidget(QLabel('Multiplicative factor for original file'))
@@ -268,7 +279,7 @@ class MainWindow(QMainWindow):
         self.fo_factor_spin.setSingleStep(0.1)
         self.fo_factor_spin.setValue(1.0)
         fo_factor_layout.addWidget(self.fo_factor_spin)
-        layout.addLayout(fo_factor_layout)
+        # layout.addLayout(fo_factor_layout) # no borrar
         
         # Factor de multiplicación comparación
         fc_factor_layout = QHBoxLayout()
@@ -278,7 +289,7 @@ class MainWindow(QMainWindow):
         self.fc_factor_spin.setSingleStep(0.1)
         self.fc_factor_spin.setValue(1.0)
         fc_factor_layout.addWidget(self.fc_factor_spin)
-        layout.addLayout(fc_factor_layout)
+        # layout.addLayout(fc_factor_layout) # no borrar
         
         # IVAR to error checkbox
         ivar_layout = QHBoxLayout()
@@ -286,7 +297,7 @@ class MainWindow(QMainWindow):
         self.ivar_combo = QComboBox()
         self.ivar_combo.addItems(["False", "True"])
         ivar_layout.addWidget(self.ivar_combo)
-        layout.addLayout(ivar_layout)
+        # layout.addLayout(ivar_layout) # no borrar
         
         # Botón de carga
         load_layout = QHBoxLayout()
@@ -294,6 +305,18 @@ class MainWindow(QMainWindow):
         self.btn_load.clicked.connect(self.on_load_clicked)
         self.btn_load.setEnabled(False)  # Deshabilitado hasta que se seleccione un archivo
         load_layout.addWidget(self.btn_load)
+        # layout.addLayout(load_layout) # no borrar
+
+        # Adding the widgets in a certain order
+        layout.addLayout(file_layout)
+        layout.addLayout(data_ext_layout)
+        layout.addLayout(error_ext_layout)
+        layout.addLayout(flag_ext_layout)
+        layout.addLayout(header_ext_layout)
+        layout.addLayout(angle_layout)
+        layout.addLayout(fo_factor_layout)
+        layout.addLayout(fc_factor_layout)
+        layout.addLayout(ivar_layout)
         layout.addLayout(load_layout)
 
     def setup_workspace_panel(self, layout):
