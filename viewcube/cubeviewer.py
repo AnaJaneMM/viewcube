@@ -181,11 +181,16 @@ class CubeViewer(QWidget):
     ):
         super().__init__()
         
-        # Guardar parámetros
+        # Guardar parámetros básicos
         self.name_fits = name_fits
         self.ptable = ptable
         self.fitscom = fitscom
         self.kwargs = kwargs
+        
+        # Guardar configuración de visualización
+        self.show_colorbar = colorbar  # Renombramos para evitar conflicto
+        self.wlim = wlim
+        self.flim = flim
         
         # Crear layouts principales
         self.main_layout = QVBoxLayout(self)
@@ -204,9 +209,6 @@ class CubeViewer(QWidget):
         # Inicializar variables de estado
         self.selected_spaxels = []
         self.current_filter = default_filter
-        self.colorbar = colorbar
-        self.wlim = wlim
-        self.flim = flim
         
     def setup_spaxel_widget(self):
         """Configura el widget de visualización de spaxels"""
@@ -235,8 +237,37 @@ class CubeViewer(QWidget):
                 ivar=self.kwargs.get('ivar', False)
             )
             
-            # Actualizar visualizaciones
-            self.update_visualizations()
+            # Inicializar dimensiones
+            if self.fits_data is not None and self.fits_data.data is not None:
+                self.data = self.fits_data.data
+                self.nx = self.data.shape[2] if len(self.data.shape) == 3 else self.data.shape[1]
+                self.ny = self.data.shape[1] if len(self.data.shape) == 3 else self.data.shape[0]
+                
+                # Inicializar wavelength si existe
+                if hasattr(self.fits_data, 'wave'):
+                    self.wl = self.fits_data.wave
+                else:
+                    self.wl = np.arange(self.data.shape[0] if len(self.data.shape) == 3 else 1)
+                
+                # Inicializar espectro promedio
+                self.spec = np.nanmean(self.data, axis=(1,2)) if len(self.data.shape) == 3 else self.data.flatten()
+                
+                # Inicializar datos de comparación si existen
+                if self.fitscom:
+                    comp_data = LoadFits(
+                        self.fitscom,
+                        exdata=self.kwargs.get('exdata'),
+                        exhdr=self.kwargs.get('exhdr', 0)
+                    )
+                    if comp_data is not None and comp_data.data is not None:
+                        self.speccom = np.nanmean(comp_data.data, axis=(1,2)) if len(comp_data.data.shape) == 3 else comp_data.data.flatten()
+                    else:
+                        self.speccom = None
+                else:
+                    self.speccom = None
+                
+                # Actualizar visualizaciones
+                self.update_visualizations()
             
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error cargando archivo FITS: {str(e)}")
@@ -248,29 +279,31 @@ class CubeViewer(QWidget):
         
     def update_spaxel_view(self):
         """Actualiza la vista de spaxels"""
-        if hasattr(self, 'fits_data') and self.fits_data.data is not None:
-            # Limpiar vista anterior
-            self.spaxel_widget.clear()
-            
-            # Crear imagen
-            img = pg.ImageItem(self.fits_data.data[0])
-            self.spaxel_widget.addItem(img)
-            
-            # Ajustar límites
-            self.spaxel_widget.autoRange()
-            
-            # Agregar colorbar si está habilitado
-            if self.colorbar:
-                self.add_colorbar()
+        if hasattr(self, 'fits_data') and self.fits_data is not None:
+            try:
+                # Limpiar vista anterior
+                self.spaxel_widget.clear()
                 
-    def add_colorbar(self):
-        """Agrega una barra de color a la vista de spaxels"""
-        colorbar = pg.ColorBarItem(
-            values=(np.min(self.fits_data.data[0]), np.max(self.fits_data.data[0])),
-            colorMap='viridis'
-        )
-        colorbar.setImageItem(self.spaxel_widget.getImageItem())
-        
+                # Crear imagen
+                img = pg.ImageItem(self.fits_data.data[0])
+                self.spaxel_widget.addItem(img)
+                
+                # Ajustar límites
+                self.spaxel_widget.autoRange()
+                
+                # Agregar colorbar si está habilitado
+                try:
+                    if getattr(self, 'colorbar', True):  # Si no existe, asume True
+                        colorbar = pg.ColorBarItem(
+                            values=(np.nanmin(self.fits_data.data[0]), np.nanmax(self.fits_data.data[0])),
+                            colorMap='viridis'
+                        )
+                        colorbar.setImageItem(img)
+                except Exception as e:
+                    print(f"Error al crear colorbar: {e}")
+            except Exception as e:
+                print(f"Error actualizando vista de spaxels: {e}")
+                
     def update_spectrum_view(self):
         """Actualiza la vista del espectro"""
         if hasattr(self, 'fits_data') and self.fits_data.data is not None:
@@ -500,3 +533,12 @@ class CubeViewer(QWidget):
     def Sonification(self):
         """Muestra la interfaz de sonificación"""
         QMessageBox.information(self, "Info", "Sonification feature not implemented in PyQt5 version yet")
+
+    def getSpec(self, x, y):
+        """Obtiene el espectro para un spaxel específico"""
+        if hasattr(self, 'data') and self.data is not None:
+            if len(self.data.shape) == 3:
+                return self.data[:, y, x]
+            else:
+                return self.data[y, x]
+        return None
