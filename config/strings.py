@@ -9,6 +9,7 @@ SPAXEL_FRAME_NAME = "Spaxel Viewer"
 
 # Configuration for explorer
 SEARCH_FITS_MSG = 'Seleccionar fichero FITS'
+SEARCH_COMPARISSON_FITS_MSG = 'Seleccionar fichero FITS de comparación'
 SEARCH_POSITION_TABLE_MSG = 'Seleccionar tabla de posiciones'
 SEARCH_FITS_FILTER = 'FITS files (*.fits *.fit)'
 SEARCH_ALL_FILES = 'All Files (*.*)'
@@ -39,6 +40,7 @@ BUTTON_SELECT_FILES = "Seleccionar archivos"
 LABEL_NO_FILE = "Archivo actual: ninguno"
 EXTERNAL_POSITION_TABLE = 'Tabla de posiciones externa para RSS Viewer'
 ANGLE_ROTATION = 'Angle to rotate the position table (only RSS)'
+COMPARISON_FITS_FILE = 'Fichero FITS de comparación'
 
 # Messages
 ERROR_NO_DATA = "No se pudieron leer datos del archivo FITS"
@@ -57,7 +59,9 @@ LABEL_INTENSITY = "Intensidad"
 # Information messages
 GENERIC_SUCCESS_TITLE = 'Exito'
 POSITION_TABLE_LOADED = 'Tabla de posiciones cargada correctamente'
+COMPARISON_FILE_LOADED = 'Archivo de comparación cargado correctamente'
 
 # Error messages
 GENERIC_ERROR_TITLE = 'Error'
 ERROR_LOADING_POS_TABLE = 'Error al cargar la tabla de posiciones: '
+ERROR_LOADING_COMPARISON_FITS_FILE = 'Error al cargar el fichero FITS de comparación: '

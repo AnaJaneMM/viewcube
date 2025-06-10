@@ -106,6 +106,8 @@ class SpaxelWidget(PlotWidget):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.btn_search_comp_fits = None
+        self.comp_file_name_box = None
         self.btn_search_table = None
         self.position_table_box = None
         self.file_name_box = None
@@ -236,11 +238,19 @@ class MainWindow(QMainWindow):
 
         
         # Fichero FITS de comparación
-        comp_file_layout = QHBoxLayout()
-        comp_file_layout.addWidget(QLabel('Fichero FITS de comparación'))
-        self.btn_search_comp = QPushButton("Buscar archivo")
-        self.btn_search_comp.clicked.connect(self.on_search_comparison)
-        comp_file_layout.addWidget(self.btn_search_comp)
+        comp_file_group_box = QGroupBox()
+        comp_file_group_box.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        # comp_file_group_box.setStyleSheet(styles.GROUP_BOX_NO_BORDER)
+        comp_file_layout = QVBoxLayout(comp_file_group_box)
+        comp_file_line_btn_layout = QHBoxLayout()
+        self.comp_file_name_box = QLineEdit()
+        self.btn_search_comp_fits = QPushButton(strings.GENERIC_SEARCH_BUTTON)
+        self.btn_search_comp_fits.clicked.connect(self.on_search_comparison)
+        self.btn_search_comp_fits.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        comp_file_layout.addWidget(QLabel(strings.COMPARISON_FITS_FILE))
+        comp_file_line_btn_layout.addWidget(self.comp_file_name_box)
+        comp_file_line_btn_layout.addWidget(self.btn_search_comp_fits)
+        comp_file_layout.addLayout(comp_file_line_btn_layout)
         # layout.addLayout(comp_file_layout) # no borrar
         
         # DATA extension
@@ -329,7 +339,7 @@ class MainWindow(QMainWindow):
         layout.addLayout(flag_ext_layout)
         layout.addLayout(header_ext_layout)
         layout.addLayout(angle_layout)
-        layout.addLayout(comp_file_layout)
+        layout.addWidget(comp_file_group_box)
         layout.addWidget(position_table_group_box)
         layout.addLayout(fo_factor_layout)
         layout.addLayout(fc_factor_layout)
@@ -516,27 +526,20 @@ class MainWindow(QMainWindow):
                 QMessageBox.critical(self, strings.GENERIC_ERROR_TITLE, strings.ERROR_LOADING_POS_TABLE + str(e))
 
     def on_search_comparison(self):
-        """Maneja el evento de búsqueda de archivo FITS de comparación"""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Seleccionar archivo FITS de comparación",
-            "",
-            "FITS files (*.fits *.fit)"
-        )
+        """Method event linked to the search of a comparison FITS file."""
+        file_path, _ = QFileDialog.getOpenFileName(self, strings.SEARCH_COMPARISSON_FITS_MSG, "", strings.SEARCH_ALL_FILES)
         if file_path:
             try:
-                # Guardar la referencia al archivo de comparación
                 self.comparison_cube = file_path
                 
-                # Si hay un cubo cargado, actualizarlo con el nuevo archivo de comparación
+                # update cube if another cube is already loaded
                 if self.cube:
                     self.cube.fitscom = self.comparison_cube
-                    # Recargar el cubo para actualizar la comparación
                     self.load_fits_file(self.cube.name_fits)
                 
-                QMessageBox.information(self, "Éxito", "Archivo de comparación cargado correctamente")
+                QMessageBox.information(self, strings.GENERIC_SUCCESS_TITLE, strings.COMPARISON_FILE_LOADED)
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Error al cargar el archivo de comparación: {str(e)}")
+                QMessageBox.critical(self, strings.GENERIC_ERROR_TITLE, strings.ERROR_LOADING_COMPARISON_FITS_FILE + str(e))
                 self.comparison_cube = None
 
     def update_cube_parameters(self):
