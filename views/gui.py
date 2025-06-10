@@ -386,6 +386,13 @@ class MainWindow(QMainWindow):
         self.y_lineedit.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         y_layout.addWidget(self.y_lineedit)
 
+        # Print version
+        v_layout = QHBoxLayout()
+        v_layout.addWidget(QLabel("Print version"))
+        self.v_checkbox = QCheckBox()
+        self.v_checkbox.setChecked(False)
+        v_layout.addWidget(self.v_checkbox)
+
         # Botón de carga
         load_layout = QHBoxLayout()
         self.btn_load = QPushButton("Cargar")
@@ -408,6 +415,7 @@ class MainWindow(QMainWindow):
         layout.addLayout(p_layout)
         layout.addLayout(s_layout)
         layout.addLayout(y_layout)
+        layout.addLayout(v_layout)
         layout.addLayout(load_layout)
 
     def setup_workspace_panel(self, layout):
