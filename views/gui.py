@@ -369,6 +369,15 @@ class MainWindow(QMainWindow):
         self.p_lineedit.setPlaceholderText("Ruta a la tabla de posiciones")
         p_layout.addWidget(self.p_lineedit)
 
+        # Dimensión espectral
+        s_layout = QHBoxLayout()
+        s_layout.addWidget(QLabel("Spectral dimension"))
+        self.s_spinbox = QSpinBox()
+        self.s_spinbox.setMinimum(0)
+        self.s_spinbox.setMaximum(10000)
+        self.s_spinbox.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        s_layout.addWidget(self.s_spinbox)
+
         # Botón de carga
         load_layout = QHBoxLayout()
         self.btn_load = QPushButton("Cargar")
@@ -389,6 +398,7 @@ class MainWindow(QMainWindow):
         layout.addLayout(ivar_layout)
         layout.addLayout(m_layout)
         layout.addLayout(p_layout)
+        layout.addLayout(s_layout)
         layout.addLayout(load_layout)
 
     def setup_workspace_panel(self, layout):
