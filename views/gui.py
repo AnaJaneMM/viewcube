@@ -442,6 +442,7 @@ class MainWindow(QMainWindow):
         """Method event linked to the search of a FITS file."""
         file_path, _ = QFileDialog.getOpenFileName(self, strings.SEARCH_FITS_MSG, "", strings.SEARCH_FITS_FILTER)
         if file_path:
+            self.selected_fits_file = file_path
             self.file_name_box.setText(os.path.basename(file_path))
             self.btn_load.setEnabled(True)
     
