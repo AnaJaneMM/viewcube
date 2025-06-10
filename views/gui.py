@@ -393,6 +393,20 @@ class MainWindow(QMainWindow):
         self.v_checkbox.setChecked(False)
         v_layout.addWidget(self.v_checkbox)
 
+        # HDU number
+        w_layout = QHBoxLayout()
+        w_layout.addWidget(QLabel("HDU number extension for the wavelength array"))
+        self.w_lineedit = QLineEdit()
+        self.w_lineedit.setPlaceholderText("Número de extensión HDU")
+        w_layout.addWidget(self.w_lineedit)
+
+        # config file
+        config_file_layout = QHBoxLayout()
+        config_file_layout.addWidget(QLabel("Write config file"))
+        self.config_file_checkbox = QCheckBox()
+        self.config_file_checkbox.setChecked(False)
+        config_file_layout.addWidget(self.config_file_checkbox)
+
         # Botón de carga
         load_layout = QHBoxLayout()
         self.btn_load = QPushButton("Cargar")
@@ -416,6 +430,8 @@ class MainWindow(QMainWindow):
         layout.addLayout(s_layout)
         layout.addLayout(y_layout)
         layout.addLayout(v_layout)
+        layout.addLayout(w_layout)
+        layout.addLayout(config_file_layout)
         layout.addLayout(load_layout)
 
     def setup_workspace_panel(self, layout):
