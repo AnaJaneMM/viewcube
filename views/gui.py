@@ -7,9 +7,10 @@ import pyqtgraph as pg
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QTabWidget,
                              QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSpinBox, QComboBox,
-                             QFrame, QFileDialog, QAction, QGroupBox, QMessageBox, QDoubleSpinBox, QMenu)
+                             QFrame, QFileDialog, QAction, QGroupBox, QMessageBox, QDoubleSpinBox, QMenu, QSizePolicy,
+                             QLineEdit)
 from astropy.io import fits
-from config import strings
+from config import strings, styles
 from viewcube import cubeviewer as cv
 from viewcube.qt_adapter import CubeViewerAdapter
 
@@ -105,6 +106,8 @@ class SpaxelWidget(PlotWidget):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.file_name_box = None
+        self.btn_search_fits = None
         self.angle_rotation_value = None
         self.cube = None
         self.cube_adapter = None
@@ -200,17 +203,18 @@ class MainWindow(QMainWindow):
 
     def setup_config_panel(self, layout):
         # FITS File Path
-        file_layout = QHBoxLayout()
-        file_layout.addWidget(QLabel(strings.LABEL_FILE_PATH))
-        self.btn_search_fits = QPushButton(strings.BUTTON_FILE_PATH)
+        file_group_box = QGroupBox()
+        file_group_box.setStyleSheet(styles.FITS_FILE_GROUP_BOX_NO_BORDER)
+        file_layout = QVBoxLayout(file_group_box)
+        line_btn_layout = QHBoxLayout()
+        self.file_name_box = QLineEdit()
+        self.btn_search_fits = QPushButton(strings.GENERIC_SEARCH_BUTTON)
         self.btn_search_fits.clicked.connect(self.on_search_fits)
-        file_layout.addWidget(self.btn_search_fits)
-        
-        # Mostrar ruta del archivo seleccionado
-        self.fits_path_label = QLabel("")
-        file_layout.addWidget(self.fits_path_label)
-        
-        # layout.addLayout(file_layout) # no borrar
+        self.btn_search_fits.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        file_layout.addWidget(QLabel(strings.LABEL_FILE_PATH))
+        line_btn_layout.addWidget(self.file_name_box)
+        line_btn_layout.addWidget(self.btn_search_fits)
+        file_layout.addLayout(line_btn_layout)
         
         # Tabla de posiciones
         pos_table_layout = QHBoxLayout()
@@ -308,7 +312,7 @@ class MainWindow(QMainWindow):
         # layout.addLayout(load_layout) # no borrar
 
         # Adding the widgets in a certain order
-        layout.addLayout(file_layout)
+        layout.addWidget(file_group_box)
         layout.addLayout(data_ext_layout)
         layout.addLayout(error_ext_layout)
         layout.addLayout(flag_ext_layout)
@@ -412,16 +416,10 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Error", "Primero debe cargar un archivo FITS")
 
     def on_search_fits(self):
-        """Maneja el evento de búsqueda de archivo FITS"""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Seleccionar archivo FITS",
-            "",
-            "FITS files (*.fits *.fit)"
-        )
+        """Method event linked to the search of a FITS file."""
+        file_path, _ = QFileDialog.getOpenFileName(self, strings.SEARCH_FITS_MSG, "", strings.SEARCH_FITS_FILTER)
         if file_path:
-            self.selected_fits_file = file_path
-            self.fits_path_label.setText(os.path.basename(file_path))
+            self.file_name_box.setText(os.path.basename(file_path))
             self.btn_load.setEnabled(True)
     
     def on_load_clicked(self):

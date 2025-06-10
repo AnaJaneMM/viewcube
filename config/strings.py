@@ -7,6 +7,10 @@ DEFAULT_TAB_NAME = "Workspace Tab"
 SPECTRAL_FRAME_NAME = "Spectral Viewer"
 SPAXEL_FRAME_NAME = "Spaxel Viewer"
 
+# Configuration for explorer
+SEARCH_FITS_MSG = 'Seleccionar fichero FITS'
+SEARCH_FITS_FILTER = 'FITS files (*.fits *.fit)'
+
 # Menu bar text
 FILE_MENU = "Archivo"
 TOOLS_MENU = "Herramientas"
@@ -27,8 +31,8 @@ CONFIGURATION_FRAME = "Configuración"
 PLOTS_FRAME = "Gráficas"
 
 # Configuration widgets
-LABEL_FILE_PATH = "FITS File Path"
-BUTTON_FILE_PATH = "Buscar fichero"
+LABEL_FILE_PATH = "Fichero FITS principal"
+GENERIC_SEARCH_BUTTON = 'Buscar'
 BUTTON_SELECT_FILES = "Seleccionar archivos"
 LABEL_NO_FILE = "Archivo actual: ninguno"
 ANGLE_ROTATION = 'Angle to rotate the position table (only RSS)'
