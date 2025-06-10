@@ -362,6 +362,13 @@ class MainWindow(QMainWindow):
         self.m_checkbox.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         m_layout.addWidget(self.m_checkbox)
 
+        # External position table
+        p_layout = QHBoxLayout()
+        p_layout.addWidget(QLabel("External position table for RSS Viewer"))
+        self.p_lineedit = QLineEdit()
+        self.p_lineedit.setPlaceholderText("Ruta a la tabla de posiciones")
+        p_layout.addWidget(self.p_lineedit)
+
         # Botón de carga
         load_layout = QHBoxLayout()
         self.btn_load = QPushButton("Cargar")
@@ -381,6 +388,7 @@ class MainWindow(QMainWindow):
         layout.addLayout(fc_factor_layout)
         layout.addLayout(ivar_layout)
         layout.addLayout(m_layout)
+        layout.addLayout(p_layout)
         layout.addLayout(load_layout)
 
     def setup_workspace_panel(self, layout):
