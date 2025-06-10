@@ -298,14 +298,23 @@ class MainWindow(QMainWindow):
         extension_layout.addLayout(header_ext_layout)
 
         # Rotation angle
-        angle_layout = QVBoxLayout()
+        angle_layout = QHBoxLayout()
         self.angle_rotation_value = QDoubleSpinBox()
         self.angle_rotation_value.setRange(0, 360)
         self.angle_rotation_value.setValue(0)
+        self.angle_rotation_value.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         angle_layout.addWidget(QLabel(strings.ANGLE_ROTATION))
         angle_layout.addWidget(self.angle_rotation_value)
 
-
+        # Sensitivity
+        sensitivity_layout = QHBoxLayout()
+        self.sensitivity_value = QComboBox() #  store_false event
+        self.sensitivity_value.addItem("True")
+        self.sensitivity_value.addItem("False")
+        self.sensitivity_value.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        self.sensitivity_value.setToolTip(strings.SENSITIVITY_HINT)
+        sensitivity_layout.addWidget(QLabel(strings.SENSITIVITY))
+        sensitivity_layout.addWidget(self.sensitivity_value)
 
         # Factor de multiplicación original
         fo_factor_layout = QHBoxLayout()
@@ -315,7 +324,6 @@ class MainWindow(QMainWindow):
         self.fo_factor_spin.setSingleStep(0.1)
         self.fo_factor_spin.setValue(1.0)
         fo_factor_layout.addWidget(self.fo_factor_spin)
-        # layout.addLayout(fo_factor_layout) # no borrar
         
         # Factor de multiplicación comparación
         fc_factor_layout = QHBoxLayout()
@@ -349,6 +357,7 @@ class MainWindow(QMainWindow):
         layout.addLayout(angle_layout)
         layout.addWidget(comp_file_group_box)
         layout.addWidget(position_table_group_box)
+        layout.addLayout(sensitivity_layout)
         layout.addLayout(fo_factor_layout) #
         layout.addLayout(fc_factor_layout)
         layout.addLayout(ivar_layout)
