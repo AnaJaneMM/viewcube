@@ -134,7 +134,9 @@ class MainWindow(QMainWindow):
         # Configuration's frame
         config_group = QGroupBox(strings.CONFIGURATION_FRAME)
         config_layout = QVBoxLayout(config_group)
+        config_layout.setAlignment(Qt.AlignTop)
         self.setup_config_panel(config_layout)
+        config_group.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
 
         # Plot's frame
         plots_group = QGroupBox(strings.PLOTS_FRAME)
