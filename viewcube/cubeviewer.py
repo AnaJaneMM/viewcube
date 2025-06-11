@@ -34,6 +34,13 @@ pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
 
 def get_wavelength_coordinates(w, Nwave):
+    """
+    Calculate the wavelength coordinates based on the input parameters.
+
+    :param w: The input object for wavelength calculation.
+    :param Nwave: The number of wavelength coordinates.
+    :returns: The calculated wavelength coordinates.
+    """
     w = w.sub([3])
     pix_coords = np.arange(Nwave)
     wave_coords = w.wcs_pix2world(pix_coords[:, np.newaxis], 0)
