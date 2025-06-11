@@ -148,7 +148,16 @@ def GetFluxLimits(flim):
             fmin, fmax = flim
     return fmin, fmax
 
+
 def PRectangle(x, y, r):
+    """
+    Calculate the coordinates of a rectangle based on the input parameters.
+
+    :param x: X-coordinate or list of X-coordinates of the rectangle.
+    :param y: Y-coordinate or list of Y-coordinates of the rectangle.
+    :param r: The radius of the rectangle.
+    :returns: Two arrays representing the X and Y coordinates of the rectangle vertices.
+    """
     if isinstance(x, (list, tuple)):
         x = np.array(x)
         y = np.array(y)
