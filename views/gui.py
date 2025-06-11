@@ -50,6 +50,8 @@ class PlotWidget(QWidget):
         
         # Crear el gráfico
         self.chart = pg.PlotWidget()
+        self.chart.setFixedWidth(400)
+        self.chart.setFixedHeight(400)
         self.chart.setBackgroundVisible(False)
         
         # Añadir la vista al layout
@@ -89,7 +91,6 @@ class SpaxelWidget(PlotWidget):
         self.chart.addItem(self.scatter)
         
     def plot_spaxel(self, data, clear=True):
-        """Dibuja el spaxel"""
         if clear:
             self.clear_graph()
             
@@ -126,7 +127,7 @@ class MainWindow(QMainWindow):
         # Central widget and main layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        main_layout = QHBoxLayout(central_widget)  # Cambiado a horizontal
+        main_layout = QHBoxLayout(central_widget)
 
         # Menu
         self.setup_menu()
@@ -440,13 +441,19 @@ class MainWindow(QMainWindow):
         plots_layout = QHBoxLayout()
         
         # Frame izquierdo (Spaxel)
+        ancho_spaxel = 710
+        alto_spaxel = 600
+        ancho_spectral = 800
+        alto_spectral = 500
         spaxel_frame = QFrame()
         spaxel_frame.setFrameStyle(QFrame.Box | QFrame.Raised)
+        spaxel_frame.setFixedSize(int(ancho_spaxel*0.70), int(alto_spaxel*0.70))
         spaxel_layout = QVBoxLayout(spaxel_frame)
         
         # Frame derecho (Espectro)
         spectrum_frame = QFrame()
         spectrum_frame.setFrameStyle(QFrame.Box | QFrame.Raised)
+        spectrum_frame.setFixedSize(int(ancho_spectral*0.70), int(alto_spectral*0.70))
         spectrum_layout = QVBoxLayout(spectrum_frame)
         
         # Añadir los frames al layout principal
