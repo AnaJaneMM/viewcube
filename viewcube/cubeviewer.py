@@ -240,61 +240,58 @@ class CubeViewer(QWidget):
         **kwargs
     ):
         """
-        You can use it with 'rssv = CubeViewer('ngc.fits','ngc.pt.txt')'.
-
-        :param name_fits: Path to the FITS file to be loaded.
-        :param ptable: Path to the position table file (optional).
-        :param fitscom: Path to the companion FITS file (optional).
-        :param syncom: Boolean indicating if the companion FITS file is synthetic (default: False).
-        :param default_filter: Default filter to apply to the data (default: "Halpha_KPNO-NOAO").
-        :param exdata: Data extension to load from the FITS file (default: None).
-        :param exhdr: Header extension to load from the FITS file (default: 0).
-        :param exwave: Wavelength extension to load from the FITS file (default: None).
-        :param exflag: Flag extension to load from the FITS file (default: None).
-        :param exerror: Error extension to load from the FITS file (default: None).
-        :param specaxis: Axis along which the spectrum is defined (default: None).
-        :param dfilter: Directory where the filter files are located (default: "filters/").
-        :param norm: Normalization mode (default: "sqrt").
-        :param fo: Original multiplicative factor for the data (default: 1.0).
-        :param fc: Comparison multiplicative factor for the companion data (default: 1.0).
-        :param mval: Minimum value for the data (default: 0.0).
-        :param palpha: Alpha value for the plot (default: 0.95).
-        :param plw: Line width for the plot (default: 0.1).
-        :param plc: Color for the plot (default: "k").
-        :param clw: Line width for the color bar (default: 1).
-        :param cc: Color for the color bar (default: "r").
-        :param cf: Boolean indicating if the color bar is filled (default: False).
-        :param ca: Alpha value for the color bar (default: 0.8).
-        :param slw: Line width for the spectrum (default: 2).
-        :param sf: Boolean indicating if the spectrum is filled (default: False).
-        :param sa: Alpha value for the spectrum (default: 0.9).
-        :param cspec: Color for the spectrum (default: "#1f77b4").
-        :param lspec: Line width for the spectrum (default: 1).
-        :param ccom: Color for the companion spectrum (default: "#ff7f0e").
-        :param lcom: Line width for the companion spectrum (default: 1).
-        :param cflag: Color for the flag (default: "r").
-        :param lflag: Line width for the flag (default: 1).
-        :param colorbar: Boolean indicating if the color bar should be shown (default: True).
-        :param fits: Boolean indicating if the FITS file should be loaded (default: False).
-        :param txt: Boolean indicating if the text file should be loaded (default: True).
-        :param integrated: Boolean indicating if the integrated spectrum should be shown (default: True).
-        :param individual: Boolean indicating if individual spaxels should be shown (default: False).
-        :param wlim: Wavelength limits for the spectrum plot (default: None).
-        :param flim: Flux limits for the spectrum plot (default: None).
-        :param iclm: Boolean indicating if the color limits should be applied (default: True).
-        :param fp: Factor for the plot (default: 1.2).
-        :param fig_spaxel_size: Size of the spaxel figure (default: (7.1, 6)).
-        :param fig_spectra_size: Size of the spectrum figure (default: (8, 5)).
-        :param fig_window_manager: Size of the window manager figure (default: (5, 5)).
-        :param c: Speed of light in km/s (default: 299792.458).
-        :param cfilter: Boolean indicating if the filter should be applied (default: False).
-        :param remove_cont: Boolean indicating if the continuum should be removed (default: False).
-        :param masked: Boolean indicating if the data is masked (default: True).
-        :param vflag: Flag for visibility (default: 0).
-        :param dsoni: Directory for sonification files (default: None).
-        :param ref_mode: Reference mode for WCS (default: "crpix").
-        :param soni_start: Boolean indicating if sonification should start (default: False).
-        :param kwargs: Additional keyword arguments for customization.
+        # -----------------------------------------------------------------------------
+              USE:
+                      rssv = CubeViewer('ngc.fits','ngc.pt.txt')
+        # -----------------------------------------------------------------------------
+              name_fits --> Name of the fits file
+              ptbale --> Name of the position table
+              fitscom = None --> Name of the RSS fits file you want to compare
+              syncom = False --> If file is a Pycasso FITS file, plot also synthetic
+                      spectra (as "fitscom" object)
+              dfilter = 'filters/' --> Directory where the filters are located
+              norm = 'sqrt' --> Normalize function for the color map
+              default_filter = 'Halpha_KPNO-NOAO' --> Root name of the default filter
+              fo = 1.0 --> Multiplicative factor for original file
+              fc = 1.0 --> Multiplicative factor for "fitscom" file
+              mval = 0.0 --> Not Finite masked values
+              palpha = 0.95 --> Alpha value of the RSS spaxels
+              plw = 0.1 --> Linewidth of the RSS spaxels
+              plc = 'k' --> Color of the border of the RSS spaxels
+              clw = 1 --> Linewidth of the RSS spaxel selector
+              cf = False --> Fill value of the RSS selected spaxels
+              ca = 0.8 --> Alpha value of the RSS selected spaxels
+              slw = 2 --> Linewidth of the spectra-->spaxel-spaxel
+              sf = False --> Fill value of the spectra-->spaxel-spaxel
+              sa = 0.9 --> Alpha value of the spectra-->spaxel-spaxel
+              cspec = '#1f77b4' --> Color for plotting the spectra
+              lspec = 1 --> Linewidth for plotting the spectra
+              ccom = '#ff7f0e' --> Color for plotting the comparison spectra
+              lcom = 1 --> Linewidth for plotting the comparison spectra
+              cflag = 'r' --> Color for plotting the flags
+              lflag = 1 --> Linewidth for plotting the flags
+              colorbar = False --> Set colorbar in the RSS spaxel viewer
+              fits = False --> Save files in fits type
+              txt = True --> Save files in ASCII type
+              integrated = True --> Save the integrated spectrum of the selected spaxels
+              individual = False --> Save the individual spectra of the selected spaxels
+              wlim = None --> 2D-Tuple with the wavelength limits of the spectra inspector
+              flim = None --> 2D-Tuple with the flux limits of the spectra inspector
+              iclm = True --> DS9-like option for changing the dynamical range of the
+                      RSS spaxel Viewer
+              fp = 1.2 --> The filter is multipy by the maximum value of the spectra and
+                      by this multiplicative constant
+              fig_spaxel_size = (7,6) --> 2D-Tuple with the size of the RSS spaxel viewer
+              fig_spectra_size = (8,5) --> 2D-Tuple with the size of the Spectral inspector
+              fig_window_manager = (5,5) --> 2D-Tuple with the size of the Window Manager
+              cfilter = False --> Center filter in wavelength range
+              remove_cont = False --> Remove continuum from adjacent positions (right and left)
+              masked = True --> Use masked arrays for flux (flag = mask)
+              vflag = 0 --> Flags with values larger than "vflag" are considered flagged
+              dsoni -> Directory for sonification module and data
+              ref_mode -> Mode for choosing reference pixel: 'crpix' or 'max'
+              soni_start -> Activate sonification mode (import libraries and check database)
+        # -----------------------------------------------------------------------------
         """
         super().__init__()
         
