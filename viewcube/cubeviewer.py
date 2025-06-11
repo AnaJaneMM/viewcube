@@ -169,7 +169,16 @@ def PRectangle(x, y, r):
         yv = y[:, np.newaxis] + np.array([0.0, r, r, 0.0])
     return xv, yv
 
+
 def tmpName(prefix="tmp", char=8, suffix="fits"):
+    """
+    Generate a temporary filename.
+
+    :param prefix: The prefix for the filename (default is 'tmp').
+    :param char: The number of characters for the random string (default is 8).
+    :param suffix: The suffix for the filename (default is 'fits').
+    :return: A string representing the temporary filename in the format 'prefix_randomString.suffix'.
+    """
     schar = "".join(random.choice(string.ascii_letters + string.digits) for i in range(char))
     return "%s_%s.%s" % (prefix, schar, suffix)
 
