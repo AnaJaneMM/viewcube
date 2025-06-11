@@ -132,6 +132,13 @@ def GetLambdaLimits(wl, pt=0.05, wlim=None):
 
 
 def GetFluxLimits(flim):
+    """
+    Get the minimum and maximum flux limits based on the input. Used to stablish the limits of the plot.
+    Also, this function is used to set the Y-axis (flow) limits in the spectrum plot.
+
+    :param flim: Tuple or list of two items representing the flux limits (fmin, fmax).
+    :return: Tuple containing the minimum and maximum flux limits.
+    """
     fmin = None
     fmax = None
     if flim is not None:
