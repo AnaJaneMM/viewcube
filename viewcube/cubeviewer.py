@@ -71,7 +71,16 @@ def GetIdFilter(list, filter, dfil="."):
         print("Filter: " + ".".join(lfil[0].split(".")[:-1]))
         return list.index(lfil[0])
 
+
 def GetSpaxelLimits(x, y, radius):
+    """
+    Calculate the mosaic limits based on the spaxel coordinates and radius.
+
+    :param x: X coordinates of the spaxels.
+    :param y: Y coordinates of the spaxels.
+    :param radius: Radius multiplier for spaxel calculations.
+    :return: A list containing the calculated mosaic limits [xmin, xmax, ymin, ymax].
+    """
     spax_fac = radius * 7
     xbar = abs(max(x) - min(x)) * 0.5
     ybar = abs(max(y) - min(y)) * 0.5
@@ -93,6 +102,7 @@ def GetSpaxelLimits(x, y, radius):
     ymin_mosaic = round(ymed - ybar * yfbar)
 
     return [xmin_mosaic, xmax_mosaic, ymin_mosaic, ymax_mosaic]
+
 
 def GetLambdaLimits(wl, pt=0.05, wlim=None):
     if isinstance(wl, (tuple, list)):
