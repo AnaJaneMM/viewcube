@@ -105,6 +105,14 @@ def GetSpaxelLimits(x, y, radius):
 
 
 def GetLambdaLimits(wl, pt=0.05, wlim=None):
+    """
+    Calculate the wavelength limits based on the input wavelengths. Used to stablish the limits of the plot.
+
+    :param wl: List of wavelengths or list of wavelength ranges.
+    :param pt: Percentage of wavelength range to add as padding.
+    :param wlim: User-defined wavelength limits as a tuple (wlim_min, wlim_max).
+    :return: A tuple containing the calculated wavelength limits (wmin - range * pt, wmax + range * pt).
+    """
     if isinstance(wl, (tuple, list)):
         wl = [(np.min(item), np.max(item)) for item in wl if item is not None]
     wmin = np.min(wl)
@@ -120,6 +128,7 @@ def GetLambdaLimits(wl, pt=0.05, wlim=None):
                 wmax = wlimmax
     range = abs(wmax - wmin)
     return wmin - range * pt, wmax + range * pt
+
 
 def GetFluxLimits(flim):
     fmin = None
