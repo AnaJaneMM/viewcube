@@ -49,6 +49,14 @@ def get_wavelength_coordinates(w, Nwave):
     return np.squeeze(wave_coords)
 
 def GetIdFilter(list, filter, dfil="."):
+    """
+    Get the index of the first item in the list that matches the filter.
+
+    :param list: The list of items to search.
+    :param filter: The filter to apply to the list.
+    :param dfil: The default filter value.
+    :return: The index of the matching item in the list.
+    """
     if filter is not None:
         lfil = lsfiles("*" + filter + "*", dfil)
     else:
@@ -57,7 +65,7 @@ def GetIdFilter(list, filter, dfil="."):
         if filter is not None:
             print('"' + filter + '" NOT found. Set to "' + list[0] + '"')
         else:
-            print('Set filer to "' + list[0] + '"')
+            print('Set filter to "' + list[0] + '"')
         return 0
     else:
         print("Filter: " + ".".join(lfil[0].split(".")[:-1]))
