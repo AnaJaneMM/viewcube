@@ -107,6 +107,7 @@ def GetSpaxelLimits(x, y, radius):
 def GetLambdaLimits(wl, pt=0.05, wlim=None):
     """
     Calculate the wavelength limits based on the input wavelengths. Used to stablish the limits of the plot.
+    Also, this function is used to set the X-axis (wavelength) limits in the spectrum plot.
 
     :param wl: List of wavelengths or list of wavelength ranges.
     :param pt: Percentage of wavelength range to add as padding.
