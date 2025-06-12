@@ -157,23 +157,69 @@ def GetFluxLimits(flim, data=None):
     Get the minimum and maximum flux limits based on the input. Used to stablish the limits of the plot.
     Also, this function is used to set the Y-axis (flow) limits in the spectrum plot.
 
-    :param flim: Tuple or list of two items representing the flux limits (fmin, fmax).
-    :return: Tuple containing the minimum and maximum flux limits.
+    Args:
+        flim: Tuple or list of two items representing the flux limits (fmin, fmax).
+              If None, limits will be calculated from data.
+        data: Optional numpy array to calculate limits from if flim is None.
+
+    Returns:
+        Tuple containing the minimum and maximum flux limits.
+
+    Raises:
+        ValueError: If flux limits cannot be determined.
     """
-    fmin = None
-    fmax = None
+    # Initialize default values
+    fmin, fmax = None, None
+
+    # If flim is provided, use it
     if flim is not None:
-        if type(flim) not in [list, tuple] or len(flim) != 2:
+        if not isinstance(flim, (list, tuple)) or len(flim) != 2:
             print("Flux limits should be a tuple or list of two items: ex. --> (None, 1e-18)")
         else:
             fmin, fmax = flim
-    # <<< NUEVO: Si no hay límites, calcula a partir de los datos >>>
+            # Convert any string 'None' to actual None
+            fmin = None if fmin == 'None' or (isinstance(fmin, str) and fmin.strip() == '') else fmin
+            fmax = None if fmax == 'None' or (isinstance(fmax, str) and fmax.strip() == '') else fmax
+            # Convert to float if not None
+            try:
+                fmin = float(fmin) if fmin is not None else None
+                fmax = float(fmax) if fmax is not None else None
+            except (ValueError, TypeError) as e:
+                print(f"Warning: Invalid flux limit values: {e}")
+                fmin, fmax = None, None
+
+    # If limits are still None and data is provided, calculate from data
     if (fmin is None or fmax is None) and data is not None:
-        fmin = float(np.nanmin(data))
-        fmax = float(np.nanmax(data))
+        try:
+            valid_data = data[np.isfinite(data)]
+            if len(valid_data) > 0:
+                data_min = np.nanmin(valid_data)
+                data_max = np.nanmax(valid_data)
+                data_range = data_max - data_min
+
+                # Set reasonable defaults if calculated values are invalid
+                if np.isfinite(data_min) and np.isfinite(data_max):
+                    if fmin is None:
+                        fmin = max(data_min - 0.1 * data_range, 0) if data_range > 0 else 0.9 * data_min
+                    if fmax is None:
+                        fmax = data_max + 0.1 * data_range if data_range > 0 else 1.1 * data_max
+        except Exception as e:
+            print(f"Warning: Error calculating flux limits from data: {e}")
+
+    # Final validation
     if fmin is None or fmax is None:
-        raise ValueError("Flux limits could not be determined (fmin or fmax is None).")
-    return fmin, fmax
+        # If we still don't have valid limits, provide some defaults
+        if fmin is None:
+            fmin = 0.0
+        if fmax is None:
+            fmax = 1.0
+        print(f"Warning: Using default flux limits: ({fmin}, {fmax})")
+
+    # Ensure fmin < fmax
+    if fmin >= fmax:
+        fmin, fmax = fmax, fmin
+
+    return float(fmin), float(fmax)
 
 
 def PRectangle(x, y, r):
@@ -210,612 +256,100 @@ def tmpName(prefix="tmp", char=8, suffix="fits"):
     return "%s_%s.%s" % (prefix, schar, suffix)
 
 class CubeViewer(QWidget):
-    def __init__(
-        self,
-        name_fits,
-        ptable=None,
-        fitscom=None,
-        syncom=False,
-        default_filter="Halpha_KPNO-NOAO",
-        exdata=None,
-        exhdr=0,
-        exwave=None,
-        exflag=None,
-        exerror=None,
-        specaxis=None,
-        dfilter="filters/",
-        norm="sqrt",
-        fo=1.0,
-        fc=1.0,
-        mval=0.0,
-        palpha=0.95,
-        plw=0.1,
-        plc="k",
-        clw=1,
-        cc="r",
-        cf=False,
-        ca=0.8,
-        slw=2,
-        sf=False,
-        sa=0.9,
-        cspec="#1f77b4",
-        lspec=1,
-        ccom="#ff7f0e",
-        lcom=1,
-        cflag="r",
-        lflag=1,
-        colorbar=True,
-        fits=False,
-        txt=True,
-        integrated=True,
-        individual=False,
-        wlim=None,
-        flim=None,
-        iclm=True,
-        fp=1.2,
-        fig_spaxel_size=(7.1, 6),
-        fig_spectra_size=(8, 5),
-        fig_window_manager=(5, 5),
-        c=299792.458,
-        cfilter=False,
-        remove_cont=False,
-        masked=True,
-        vflag=0,
-        dsoni=None,
-        ref_mode="crpix",
-        soni_start=False,
-        **kwargs
-    ):
-
-        """
-        # -----------------------------------------------------------------------------
-              USE:
-                      rssv = CubeViewer('ngc.fits','ngc.pt.txt')
-        # -----------------------------------------------------------------------------
-              name_fits --> Name of the fits file
-              ptbale --> Name of the position table
-              fitscom = None --> Name of the RSS fits file you want to compare
-              syncom = False --> If file is a Pycasso FITS file, plot also synthetic
-                      spectra (as "fitscom" object)
-              dfilter = 'filters/' --> Directory where the filters are located
-              norm = 'sqrt' --> Normalize function for the color map
-              default_filter = 'Halpha_KPNO-NOAO' --> Root name of the default filter
-              fo = 1.0 --> Multiplicative factor for original file
-              fc = 1.0 --> Multiplicative factor for "fitscom" file
-              mval = 0.0 --> Not Finite masked values
-              palpha = 0.95 --> Alpha value of the RSS spaxels
-              plw = 0.1 --> Linewidth of the RSS spaxels
-              plc = 'k' --> Color of the border of the RSS spaxels
-              clw = 1 --> Linewidth of the RSS spaxel selector
-              cf = False --> Fill value of the RSS selected spaxels
-              ca = 0.8 --> Alpha value of the RSS selected spaxels
-              slw = 2 --> Linewidth of the spectra-->spaxel-spaxel
-              sf = False --> Fill value of the spectra-->spaxel-spaxel
-              sa = 0.9 --> Alpha value of the spectra-->spaxel-spaxel
-              cspec = '#1f77b4' --> Color for plotting the spectra
-              lspec = 1 --> Linewidth for plotting the spectra
-              ccom = '#ff7f0e' --> Color for plotting the comparison spectra
-              lcom = 1 --> Linewidth for plotting the comparison spectra
-              cflag = 'r' --> Color for plotting the flags
-              lflag = 1 --> Linewidth for plotting the flags
-              colorbar = False --> Set colorbar in the RSS spaxel viewer
-              fits = False --> Save files in fits type
-              txt = True --> Save files in ASCII type
-              integrated = True --> Save the integrated spectrum of the selected spaxels
-              individual = False --> Save the individual spectra of the selected spaxels
-              wlim = None --> 2D-Tuple with the wavelength limits of the spectra inspector
-              flim = None --> 2D-Tuple with the flux limits of the spectra inspector
-              iclm = True --> DS9-like option for changing the dynamical range of the
-                      RSS spaxel Viewer
-              fp = 1.2 --> The filter is multipy by the maximum value of the spectra and
-                      by this multiplicative constant
-              fig_spaxel_size = (7,6) --> 2D-Tuple with the size of the RSS spaxel viewer
-              fig_spectra_size = (8,5) --> 2D-Tuple with the size of the Spectral inspector
-              fig_window_manager = (5,5) --> 2D-Tuple with the size of the Window Manager
-              cfilter = False --> Center filter in wavelength range
-              remove_cont = False --> Remove continuum from adjacent positions (right and left)
-              masked = True --> Use masked arrays for flux (flag = mask)
-              vflag = 0 --> Flags with values larger than "vflag" are considered flagged
-              dsoni -> Directory for sonification module and data
-              ref_mode -> Mode for choosing reference pixel: 'crpix' or 'max'
-              soni_start -> Activate sonification mode (import libraries and check database)
-        # -----------------------------------------------------------------------------
-        """
-        super().__init__()
-        try:
-            import pyraf
-            self.pyraf = True
-        except ImportError:
-            self.pyraf = False
-        try:
-            import pyspeckit
-            self.pyspec = True
-        except ImportError:
-            self.pyspec = False
-
-        self.fitspec_mode = 0  # 0 = PYRAF | 1 = PYSPECKIT
-        self.fitspec = self.pyraf or self.pyspec
-
-        # version
-        self.ax2 = None
-        self.fmax = None
-        self.fmin = None
-        self.awlmax = None
-        self.awlmin = None
-        self.ext = None
-        self.version = version.__version__
-        
-        # set variables
-        self.name_fits = name_fits
-        self.bname_fits = os.path.basename(name_fits)
-        self.ptable = ptable
-        self.fitscom = fitscom
-        self.syncom = syncom
-        self.errcom = False
-        self.specres = False
-        self.specfres = True
-        self.dfilter = dfilter
-        self.norm = norm
-        self.default_filter = default_filter
-        self.list_filters = None
-        self.palpha = palpha
-        self.plw = plw
-        self.plc = plc
-        self.colorbar = colorbar
-        self.color = None
-        self.ix, self.iy = None, None
-        self.cspec = cspec
-        self.lspec = lspec
-        self.ccom = ccom
-        self.lcom = lcom
-        self.cflag = cflag
-        self.lflag = lflag
-        self.rshow = False
-
-        # Select Circle Properties
-        self.clw = clw
-        self.cf = cf
-        self.ca = ca
-        self.cc = cc
-        # Select Spaxel Properties
-        self.slw = slw
-        self.sf = sf
-        self.sa = sa
-        # Color Map dynamic range
-        self.iclm = iclm
-        self.icmp = None
-        self.zmode = False
-        # Size Windows
-        self.fig1_size = fig_spaxel_size
-        self.fig2_size = fig_spectra_size
-        self.winman_size = fig_window_manager
-        # Labels
-        self.fig1_label = "Spaxel Viewer"
-        self.fig2_label = "Spectral Viewer"
-        self.winman_label = "Window Manager"
-        self.sint = "Integrated"
-        # Flux
-        self.flim = flim
-        self.fo = fo
-        self.fc = fc
-        # Lambda
-        self.wlim = wlim
-        self.wrest = False
-        # Save Spectra
-        self.fits = fits
-        self.txt = txt
-        # Save type
-        self.integrated = integrated
-        self.individual = individual
-        # Selected spectra
-        self.spec = None
-        self.espec = None
-        self.fspec = None
-        self.idl = None
-        # Integrated spectra
-        self.intspec = None
-        self.eintspec = None
-        self.view_pintspec = False
-        # Sonification
-        self.dsoni = dsoni
-        self.soni_start = soni_start
-        self.soni_mode = False
-        self.sc = None
-        # Constant
-        self.c = c
-        # Color Buttons
-        self.axcolor1 = "lightgoldenrodyellow"  # "Off mode"
-        self.axcolor2 = "#D0A9F5"  # Clicked color "On" mode
-        self.hovercolor = "0.975"
-        self.ccc = self.axcolor1 if not self.cf else self.axcolor2
-        self.scc = self.axcolor1 if not self.sf else self.axcolor2
-        self.tcc = self.axcolor1 if not self.integrated else self.axcolor2
-        self.icc = self.axcolor1 if not self.individual else self.axcolor2
-        self.xcc = self.axcolor1 if not self.txt else self.axcolor2
-        self.fcc = self.axcolor1 if not self.fits else self.axcolor2
-        self.clab = "Fill " + ("Off" if not self.cf else "On")
-        self.slab = "Fill " + ("Off" if not self.sf else "On")
-        self.intlab = "Integrated " + ("Off" if not self.integrated else "On")
-        self.indlab = "Individual " + ("Off" if not self.individual else "On")
-        self.txtlab = "txt " + ("Off" if not self.txt else "On")
-        self.fitlab = "fits " + ("Off" if not self.fits else "On")
-        # Pick of the Passband respect to the maximum value
-        self.fp = fp
-        # Modes
-        self.mode = True  # Spectra mode
-        self.list = []
-        self.pat = []
-        self.cir = []
-        self.spec_mode = 2
-        self.pressevent = None
-        self.cfilter = cfilter
-        self.remove_cont = remove_cont
-        # Fit Spec
-        self.fitspec = True
-        #self.pyraf = PYRAF
-        #self.pyspec = PYSPEC
-        self.fitspec_mode = 0  # 0 = PYRAF | 1 = PYSPECKIT
-        if not self.pyraf and not self.pyspec:
-            self.fitspec = False
-
-        # Basic Info
-        self.fobj = LoadFits(
-            self.name_fits,
-            exdata=exdata,
-            exhdr=exhdr,
-            exwave=exwave,
-            exflag=exflag,
-            exerror=exerror,
-            specaxis=specaxis,
-            **kwargs
-        )
-        self.K = self.fobj.K
-        self.dat = self.fo * self.fobj.data
-        self.syn = self.fobj.syn
-        self.err = self.fobj.error
-        self.flag = self.fobj.flag
-        self.crval = self.fobj.crval
-        self.cdelt = self.fobj.cdelt
-        self.redshift = self.fobj.redshift
-        self.velocity = self.fobj.velocity
-        self.pversion = self.fobj.pversion
-        self.zones = None
-        self.perr = None
-        self.pres = None
-        if self.err is not None:
-            self.err *= self.fo
-        if self.syn is not None:
-            self.syn *= self.fo
-        if self.flag is not None:
-            if self.flag.dtype.kind != "b":
-                self.flag = np.where(self.flag > vflag, True, False)
-            self.perr = self.dat.copy().astype(float)
-            self.perr[~self.flag] = np.nan
-            if self.err is not None:
-                self.err[self.flag] = np.nan
-        if mval is not None:
-            self.dat[~np.isfinite(self.dat)] = mval
-        if masked and self.flag is not None:
-            self.dat = np.ma.array(
-                self.dat, mask=np.logical_or(self.flag > 0, ~np.isfinite(self.dat))
-            )
-        self.hd = self.fobj.hdr
-        shp = np.shape(self.dat)
-        naxes = len(shp)
-        self.root = ".".join(self.name_fits.split(".")[:-1])
-        # min, max = self.dat.min(), self.dat.max()
-        self.fobj2 = None
-        self.wl2 = None
-        self.err2 = None
-        if self.fitscom is not None:
-            self.fobj2 = LoadFits(
-                self.fitscom,
-                exdata=exdata,
-                exhdr=exhdr,
-                exwave=exwave,
-                exflag=exflag,
-                exerror=exerror,
-                specaxis=specaxis,
-                **kwargs
-            )
-            self.wl2 = self.fobj2.wave
-            self.dat2 = self.fc * self.fobj2.data
-            if self.fobj2.error is not None:
-                self.err2 = self.fc * self.fobj2.error
-        if self.syncom and self.syn is not None:
-            self.wl2 = self.fobj.wave
-            self.dat2 = self.fobj.syn * self.fc
-        if self.syn is not None:
-            if Version(self.pversion) < Version("2.0.0"):
-                self.K.zres = (self.K.f_obs - self.K.f_syn) / self.K.fobs_norm
-                self.K.tres = (self.K.f_obs - self.K.f_syn).sum(axis=1) / self.K.fobs_norm.sum()
-                self.zones = self.fobj.K.qZones.copy()
-                self.K.res = self.K.zoneToYX(self.K.zres, extensive=False)
-            else:
-                if self.K.hasSegmentationMask:
-                    self.K.zres = (
-                            (self.K.f_obs - self.K.f_syn) * self.K.flux_unit / self.K.fobs_norm
-                    )
-                    self.K.tres = (self.K.flux_unit * (self.K.f_obs - self.K.f_syn)).sum(
-                        axis=1
-                    ) / self.K.fobs_norm.sum()
-                    self.zones = self.K.spatialize(
-                        np.arange(1, self.K.segmentationMask.shape[0] + 1), extensive=False
-                    )
-                    self.K.res = self.K.spatialize(self.K.zres, extensive=False)
-                    self.K.fres = self.K.spatialize(self.K.zres * self.K.fobs_norm, extensive=False)
-                else:
-                    self.K.res = (
-                            (self.K.f_obs - self.K.f_syn).filled(0.0)
-                            * self.K.flux_unit
-                            / self.K.fobs_norm
-                    )
-                    self.K.fres = (self.K.f_obs - self.K.f_syn).filled(0.0) * self.K.flux_unit
-                    self.K.zres = (
-                            (self.K.f_obs - self.K.f_syn).filled(0.0)[:, ~self.K.synthImageMask]
-                            * self.K.flux_unit
-                            / self.K.fobs_norm[~self.K.synthImageMask]
-                    )
-                    self.K.tres = (
-                                      (self.K.flux_unit * (self.K.f_obs - self.K.f_syn))[
-                                      :, ~self.K.synthImageMask
-                                      ]
-                                  ).sum(axis=1) / (self.K.fobs_norm[~self.K.synthImageMask]).sum()
-                    self.zones = np.zeros(self.K.synthImageMask.shape)
-                    self.zones[~self.K.synthImageMask] = np.arange(
-                        1, (~self.K.synthImageMask).sum() + 1
-                    )
-        # Lambda
-        if naxes == 2:
-            self.ns = shp[0]  # Number of spectra
-            self.nl = shp[1]  # Number of lambdas
-        if naxes == 3:
-            self.xx = shp[2]  # X
-            self.yy = shp[1]  # Y
-            self.nl = shp[0]  # Number of lambdas
-            try:
-                self.cdelt1 = self.hd["CDELT1"]
-            except:
-                self.cdelt1 = 1.0
-            try:
-                self.cdelt2 = self.hd["CDELT2"]
-            except:
-                self.cdelt2 = 1.0
-            try:
-                self.crpix1 = self.hd["CRPIX1"]
-                self.crpix2 = self.hd["CRPIX2"]
-            except:
-                self.crpix1 = int(self.xx / 2.0)
-                self.crpix2 = int(self.yy / 2.0)
-            # crval = self.hd['CRVAL3']
-            # cdelt = self.hd['CDELT3']
-            self.fx = len(str(self.xx))  # Number of digits of the number of pixels in X axis
-            self.fy = len(str(self.yy))  # Number of digits of the number of pixels in Y axis
-            #  Spatial resolution
-            self.sr = 1.0 if (self.cdelt1 == 0 or self.cdelt2 == 0) else float(self.cdelt1)
-            self.wcs = WCS(self.hd).celestial.wcs
-            if "deg" in self.wcs.cunit:
-                self.sr = (self.cdelt1 * u.deg).to("arcsec").value
-            # Choose reference pixel and ext
-            self.get_ref_pix(ref_mode)
-        # Lambda
-        # self.wl = crval + arange(self.nl)*cdelt
-        self.orig_wl = self.fobj.wave
-        self.orig_wl_rest = self.fobj.wave_rest
-        self.wl = self.fobj.wave
-        self.wl_rest = self.fobj.wave_rest
-        if self.syn is not None and self.velocity is not None:
-            self.orig_wl_rest = self.fobj.wave_rest
-            self.orig_wl = self.vredshift(-self.velocity)
-        if self.wl is None:
-            print("*** WAVELENGTH DATA NOT FOUND!!! ***")
-            self.wl = np.arange(self.nl)
-        if self.fitscom is not None:
-            self.wlmin = min(self.wl.min(), self.wl2.min())
-            self.wlmax = max(self.wl.max(), self.wl2.max())
-        else:
-            self.wlmin = self.wl.min()
-            self.wlmax = self.wl.max()
-        self.pbline = None
-        self.pband = None
-        # Data for color imshow map
-        self.dcolor = self.dat
-
-        # Filtros
-        if self.dfilter is not None:
-            self.list_filters = lsfiles("*txt", self.dfilter, path=False)
-        self.ifil = None
-        if self.list_filters is not None:
-            self.ifil = GetIdFilter(self.list_filters, self.default_filter, self.dfilter)
-            self.nfil = len(self.list_filters)
-        self.set_fff(verb=False)
-        self.gdl = 0  # Global delta position filter
-        # color = dat[:,0:1900].sum(axis=1)
-
-        # Read Position Table
-        if self.ptable is not None:
-            ckfiles(self.ptable)
-            with open(self.ptable, "r") as f:  # Cierra automaticamente el fichero
-                mt, xs, ys, eid = f.readline().split()
-
-            if mt == "C":
-                self.radius = float(xs)
-                self.fiber_size = 2.0 * self.radius
-
-            self.id, self.x, self.y, self.flag = np.loadtxt(self.ptable, unpack=True, skiprows=1)
-            self.nsfm = len(str(self.ns))  # Number of digits of number of spaxels
-
-        else:
-            pass
-
-        
-        # Guardar configuración de visualización
-        self.show_colorbar = colorbar  # Renombramos para evitar conflicto
-        self.wlim = wlim
-        self.flim = flim
-        
-        # Crear layouts principales
-        self.main_layout = QVBoxLayout(self)
-        
-        # Crear widgets para visualización
-        self.spaxel_widget = pg.PlotWidget()
-        self.spectrum_widget = pg.PlotWidget()
-        
-        # Configurar widgets
-        self.setup_spaxel_widget()
-        self.setup_spectral_widget()
-
-        # Bind events
-        self.movement_and_mouse_events()
-        self.keyboard_events()
-        self.eventFilter()
-        self.rectangular_selection()
-        self.toggle_selector()
-        
-        # Cargar datos
-        self.load_data()
-        
-        # Inicializar variables de estado
-        self.selected_spaxels = []
-        self.current_filter = default_filter
-        
-    def setup_spaxel_widget(self):
-        """Configura el widget de visualización de spaxels"""
-        self.spaxel_widget.setBackground('w')
-        #self.spaxel_widget.showGrid(x=True, y=True)
-        self.spaxel_widget.setWindowTitle(self.fig1_label)
-        self.spaxel_widget.setAspectLocked(1.0)  # Square aspect todo: revisar
-        self.spaxel_widget.setLabel('left', 'Y')
-        self.spaxel_widget.setLabel('bottom', 'X')
-
-        img = pg.ImageItem() # imshow visualization type
-
-        # Normalización y límites de color
-        cmin, cmax = np.nanmin(self.color), np.nanmax(self.color)
-        img.setImage(self.color.T, levels=(cmin, cmax), opacity=self.palpha)  # Transponer para orientación matplotlib
-
-        # Extensión espacial (extent)
-        if hasattr(self, 'ext'):
-            img.setRect(pg.QtCore.QRectF(self.ext[0], self.ext[2], self.ext[1] - self.ext[0], self.ext[3] - self.ext[2]))
-            self.spaxel_widget.setXRange(self.ext[0], self.ext[1])
-            self.spaxel_widget.setYRange(self.ext[2], self.ext[3])
-
-        self.spaxel_widget.addItem(img)
-
-        # Título (en PyQtGraph, se suele poner en la parte superior)
-        title = pg.TextItem(self.bname_fits, anchor=(0.5, 1.0), color='k')
-        self.spaxel_widget.addItem(title)
-        title.setPos((self.ext[0] + self.ext[1]) / 2, self.ext[3])
-
-        # Colorbar (barra de color)
-        if getattr(self, 'colorbar', False):
-            hist = pg.HistogramLUTItem()
-            hist.setImageItem(img)
-            hist.gradient.loadPreset('viridis')  # O el colormap que desees
-            self.spaxel_widget.scene().addItem(hist)
-            # Ajusta posición si es necesario
-
-        # Superponer círculos de spaxels (si corresponde)
-        if hasattr(self, 'x') and hasattr(self, 'y') and hasattr(self, 'radius'):
-            for xi, yi in zip(self.x, self.y):
-                circ = pg.QtWidgets.QGraphicsEllipseItem(
-                    xi - self.radius, yi - self.radius,
-                    2 * self.radius, 2 * self.radius
-                )
-                circ.setPen(pg.mkPen('gray', width=1))
-                circ.setBrush(pg.mkBrush(None))
-                self.spaxel_widget.addItem(circ)
-
-        # Ajustar límites de ejes si es necesario
-        # self.spaxel_widget.setXRange(self.xmin, self.xmax)
-        # self.spaxel_widget.setYRange(self.ymin, self.ymax)
-
-        # === DS9-like dynamic range control ===
-        if getattr(self, 'iclm', True):  # Solo si está activado el modo DS9-like
-            self.hist = pg.HistogramLUTItem()
-            self.hist.setImageItem(img)
-            self.hist.gradient.loadPreset('viridis')
-            self.spaxel_widget.scene().addItem(self.hist)
-            # Opcional: posiciona la barra de color en la interfaz
-            # self.hist.setPos(x, y)  # Ajusta según layout
-
-            # Permite que el usuario ajuste los niveles con el ratón
-            self.hist.sigLevelsChanged.connect(lambda: img.setLevels(self.hist.getLevels()))
-        
-    def setup_spectral_widget(self):
-        """Configura el widget de visualización del espectro"""
-        self.spectrum_widget.setBackground('w')
-        self.spectrum_widget.showGrid(x=True, y=True)
-        self.spectrum_widget.setWindowTitle(self.fig2_label)
-        self.spectrum_widget.setLabel('left', 'Flux')
-        self.spectrum_widget.setLabel('bottom', 'Wavelength')
-        self.awlmin, self.awlmax = GetLambdaLimits((self.wl, self.wl2), 0.05, wlim=self.wlim)
-        self.fmin, self.fmax = GetFluxLimits(self.flim, data=self.spec)
-
-        if self.awlmin is not None and self.awlmax is not None:
-            self.spectrum_widget.setXRange(self.awlmin, self.awlmax)
-        if self.fmin is not None and self.fmax is not None:
-            self.spectrum_widget.setYRange(self.fmin, self.fmax)
-
-
-    def movement_and_mouse_events(self):
-        # Movimiento del ratón sobre el widget de spaxels
-        self.spaxel_widget.scene().sigMouseMoved.connect(self.SpectraViewer)
-
-        # Clic del ratón sobre el widget de spaxels
-        self.spaxel_widget.scene().sigMouseClicked.connect(self.SpectraViewer)
-
-        # Movimiento del ratón sobre el widget de espectros (si es necesario)
-        self.spectrum_widget.scene().sigMouseMoved.connect(self.PassBandMove)
-        self.spectrum_widget.scene().sigMouseClicked.connect(self.PassBandPress)
-
-    def keyboard_events(self):
-        # Instala el filtro de eventos en ambos widgets
-        self.spaxel_widget.installEventFilter(self)
-        self.spectrum_widget.installEventFilter(self)
-
     def eventFilter(self, obj, event):
+        """
+        Filter events for the widget.
+        
+        Args:
+            obj: The object that received the event
+            event: The event
+            
+        Returns:
+            bool: True if the event was handled, False otherwise
+        """
+        # Handle key press events
         if event.type() == QEvent.KeyPress:
-            key = event.key()
-            if key == Qt.Key_F:  # Cambiar filtro
-                self.ChangeFilter()
-            elif key == Qt.Key_S:  # Cambiar modo de visualización de spaxels
-                self.ChangeSpaxelViewer()
-            elif key == Qt.Key_B:
-                self.rect_roi.setVisible(False)
-            elif key == Qt.Key_R:
-                self.GetPycassoRes(key)
-                return True
-            elif event.key() == Qt.Key_E:
-                self.ErrorSpec()
-                return True
-            elif self.last_key in [Qt.Key_R, Qt.Key_U]:
-                self.ResSpec()
-                return True
-            elif key in [Qt.Key_T, Qt.Key_A, Qt.Key_C, Qt.Key_Shift]:
-                self.ChangeFilter(key)
-                return True
-            else:
-                self.rect_roi.setVisible(True)
-            return True  # Evento manejado
+            self.keyPressEvent(event)
+            return True
+            
+        # Handle mouse press events
+        elif event.type() == QEvent.MouseButtonPress:
+            self.mousePressEvent(event)
+            return True
+            
+        # Handle mouse move events
+        elif event.type() == QEvent.MouseMove:
+            self.mouseMoveEvent(event)
+            return True
+            
+        # Handle mouse release events
+        elif event.type() == QEvent.MouseButtonRelease:
+            self.mouseReleaseEvent(event)
+            return True
+            
         return super().eventFilter(obj, event)
 
-    def rectangular_selection(self):
-        # Crear un ROI rectangular y añadirlo al widget de spaxels
-        self.rect_roi = pg.RectROI([0, 0], [10, 10], pen='r')
-        self.spaxel_widget.addItem(self.rect_roi)
-        self.rect_roi.sigRegionChanged.connect(self.onselect)
-        self.rect_roi.setZValue(10)  # Que quede sobre la imagen
-        self.rect_roi.setVisible(False)  # Inicialmente desactivado
+    def __init__(self, name_fits, **kwargs):
+        try:
+            super().__init__()
+            
+            # Inicializar variables básicas
+            self.kwargs = kwargs
+            self.name_fits = name_fits
+            self.fits_data = None
+            self.data = None
+            self.nx = 0
+            self.ny = 0
+            self.wl = None
+            self.spec = None
+            self.speccom = None
+            
+            # Configurar widgets primero
+            self.setup_ui()
+            
+            # Cargar datos si se proporciona un archivo
+            if self.name_fits:
+                self.load_data()
+                
+        except Exception as e:
+            QMessageBox.critical(self, "Error de Inicialización", 
+                               f"Error al inicializar el visor: {str(e)}")
+            raise
 
-    # Para activar/desactivar la selección con una tecla:
-    def toggle_selector(self):
-        self.rect_roi.setVisible(not self.rect_roi.isVisible())
-
+    def setup_ui(self):
+        """Configura la interfaz de usuario"""
+        try:
+            # Crear layout principal
+            self.main_layout = QVBoxLayout()
+            self.setLayout(self.main_layout)
+            
+            # Configurar widgets
+            self.setup_spaxel_widget()
+            self.setup_spectral_widget()
+            
+            # Añadir widgets al layout
+            self.main_layout.addWidget(self.spaxel_widget)
+            self.main_layout.addWidget(self.spectrum_widget)
+            
+            # Configurar eventos
+            self.movement_and_mouse_events()
+            self.keyboard_events()
+            
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error configurando la interfaz: {str(e)}")
+            raise
 
     def load_data(self):
         """Carga los datos del archivo FITS"""
+        if not self.name_fits:
+            QMessageBox.warning(self, "Advertencia", "No se ha especificado ningún archivo FITS")
+            return
+            
         try:
+            # Verificar que el archivo existe
+            if not os.path.exists(self.name_fits):
+                raise FileNotFoundError(f"No se encontró el archivo: {self.name_fits}")
+                
             # Cargar archivo FITS usando LoadFits
             self.fits_data = LoadFits(
                 self.name_fits,
@@ -826,45 +360,100 @@ class CubeViewer(QWidget):
                 ivar=self.kwargs.get('ivar', False)
             )
             
+            if self.fits_data is None:
+                raise ValueError("No se pudo cargar el archivo FITS")
+                
+            if not hasattr(self.fits_data, 'data') or self.fits_data.data is None:
+                raise ValueError("El archivo FITS no contiene datos válidos")
+                
             # Inicializar dimensiones
-            if self.fits_data is not None and self.fits_data.data is not None:
-                self.data = self.fits_data.data
-                self.nx = self.data.shape[2] if len(self.data.shape) == 3 else self.data.shape[1]
-                self.ny = self.data.shape[1] if len(self.data.shape) == 3 else self.data.shape[0]
+            self.data = self.fits_data.data
+            if len(self.data.shape) != 3:
+                raise ValueError("Los datos deben ser un cubo 3D")
                 
-                # Inicializar wavelength si existe
-                if hasattr(self.fits_data, 'wave'):
-                    self.wl = self.fits_data.wave
-                else:
-                    self.wl = np.arange(self.data.shape[0] if len(self.data.shape) == 3 else 1)
-                
-                # Inicializar espectro promedio
-                self.spec = np.nanmean(self.data, axis=(1,2)) if len(self.data.shape) == 3 else self.data.flatten()
-                
-                # Inicializar datos de comparación si existen
-                if self.fitscom:
+            self.nx = self.data.shape[2]
+            self.ny = self.data.shape[1]
+            
+            # Inicializar wavelength si existe
+            if hasattr(self.fits_data, 'wave'):
+                self.wl = self.fits_data.wave
+            else:
+                self.wl = np.arange(self.data.shape[0])
+            
+            # Inicializar espectro promedio
+            self.spec = np.nanmean(self.data, axis=(1,2))
+            
+            # Inicializar datos de comparación si existen
+            if self.kwargs.get('fitscom'):
+                try:
                     comp_data = LoadFits(
-                        self.fitscom,
+                        self.kwargs['fitscom'],
                         exdata=self.kwargs.get('exdata'),
                         exhdr=self.kwargs.get('exhdr', 0)
                     )
                     if comp_data is not None and comp_data.data is not None:
-                        self.speccom = np.nanmean(comp_data.data, axis=(1,2)) if len(comp_data.data.shape) == 3 else comp_data.data.flatten()
+                        self.speccom = np.nanmean(comp_data.data, axis=(1,2))
                     else:
                         self.speccom = None
-                else:
+                except Exception as e:
+                    print(f"Advertencia: No se pudieron cargar los datos de comparación: {e}")
                     self.speccom = None
-                
-                # Actualizar visualizaciones
-                self.update_visualizations()
+            else:
+                self.speccom = None
+            
+            # Actualizar visualizaciones
+            self.update_visualizations()
             
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error cargando archivo FITS: {str(e)}")
-            
+            self.fits_data = None
+            self.data = None
+            self.nx = 0
+            self.ny = 0
+            self.wl = None
+            self.spec = None
+            self.speccom = None
+
+    def setup_spaxel_widget(self):
+        """Configura el widget para visualización de spaxels"""
+        try:
+            self.spaxel_widget = pg.PlotWidget()
+            self.spaxel_widget.setAspectLocked(True)
+            self.spaxel_widget.showGrid(x=True, y=True)
+            self.spaxel_widget.setMouseEnabled(x=True, y=True)
+            self.spaxel_widget.enableAutoRange()
+            self.spaxel_widget.setMenuEnabled(True)
+            self.spaxel_widget.setDownsampling(auto=True, mode='peak')
+            self.spaxel_widget.setLabel('left', 'Y')
+            self.spaxel_widget.setLabel('bottom', 'X')
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error configurando widget de spaxels: {str(e)}")
+            raise
+
+    def setup_spectral_widget(self):
+        """Configura el widget para visualización de espectros"""
+        try:
+            self.spectrum_widget = pg.PlotWidget()
+            self.spectrum_widget.showGrid(x=True, y=True)
+            self.spectrum_widget.setMouseEnabled(x=True, y=True)
+            self.spectrum_widget.enableAutoRange()
+            self.spectrum_widget.setMenuEnabled(True)
+            self.spectrum_widget.setLabel('left', 'Flux')
+            self.spectrum_widget.setLabel('bottom', 'Wavelength')
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error configurando widget de espectros: {str(e)}")
+            raise
+
     def update_visualizations(self):
         """Actualiza las visualizaciones de spaxel y espectro"""
-        self.update_spaxel_view()
-        self.update_spectrum_view()
+        try:
+            if not hasattr(self, 'fits_data') or self.fits_data is None:
+                return
+            
+            self.update_spaxel_view()
+            self.update_spectrum_view()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Error actualizando visualizaciones: {str(e)}")
         
     def update_spaxel_view(self):
         """Actualiza la vista de spaxels"""
@@ -1407,47 +996,76 @@ class CubeViewer(QWidget):
                 )
 
     def FluxLimits(self):
-        """Establece los límites de flujo en el espectro usando PyQt5 y actualiza el rango en PyQtGraph."""
-        # Diálogo para entrada de límites
+        """Establece los límites de flujo en el espectro con validación mejorada."""
+        # Get current values or reasonable defaults
+        current_min = f"{self.fmin:.2e}" if hasattr(self, 'fmin') and self.fmin is not None else ""
+        current_max = f"{self.fmax:.2e}" if hasattr(self, 'fmax') and self.fmax is not None else ""
+
+        # Show input dialog with current values
         text, ok = QInputDialog.getText(
             self,
             "Límites de flujo",
-            "Ingrese límites de flujo (ej: 1e-16, None)\nNone para automático:",
-            text=f"{self.fmin}, {self.fmax}" if self.fmin is not None and self.fmax is not None else ""
+            "Ingrese límites de flujo (mín, máx):\n"
+            "Ejemplos:\n"
+            "- '1e-16, 1e-15' para límites fijos\n"
+            '- "None, 1e-15" para límite superior fijo\n'
+            '- "1e-16, None" para límite inferior fijo\n'
+            '- "auto" para ajuste automático',
+            text=f"{current_min}, {current_max}"
         )
-        if ok:
-            try:
-                # Parsear la entrada
+
+        if not ok:
+            return
+
+        try:
+            # Handle auto mode
+            if text.strip().lower() == 'auto':
+                self.fmin, self.fmax = None, None
+                if hasattr(self, 'spec') and self.spec is not None:
+                    self.fmin, self.fmax = GetFluxLimits(None, data=self.spec)
+            else:
+                # Parse user input
                 parts = [p.strip() for p in text.split(',')]
+                if len(parts) != 2:
+                    raise ValueError("Debe ingresar exactamente dos valores separados por coma")
+
+                # Parse min and max values
                 flim = []
-                for p in parts[:2]:  # Máximo 2 valores
+                for p in parts:
+                    p = p.strip()
                     if p.lower() in ('none', ''):
                         flim.append(None)
                     else:
-                        flim.append(float(p))
-                if len(flim) < 2:
-                    flim += [None] * (2 - len(flim))
-                # Calcular límites
-                self.fmin, self.fmax = GetFluxLimits(flim, self.spec)
+                        try:
+                            flim.append(float(p))
+                        except ValueError:
+                            raise ValueError(f"Valor no válido: {p}")
 
-                # Comprobar que los límites no sean None
-                if self.fmin is None or self.fmax is None:
-                    raise ValueError("Los límites de flujo no pueden ser None.")
-                # Mensaje de confirmación
-                QMessageBox.information(
-                    self,
-                    "Límites actualizados",
-                    f"Límites de flujo: ({self.fmin}, {self.fmax})"
-                )
-                # Actualizar el rango del eje Y en el espectro
+                # Get new limits
+                self.fmin, self.fmax = GetFluxLimits(flim, getattr(self, 'spec', None))
+
+            # Update plot
+            if hasattr(self, 'spectrum_widget') and self.spectrum_widget is not None:
                 if self.fmin is not None and self.fmax is not None:
                     self.spectrum_widget.setYRange(self.fmin, self.fmax)
-            except Exception as e:
-                QMessageBox.critical(
-                    self,
-                    "Error",
-                    f"Entrada inválida: {str(e)}\nEjemplo válido: '1e-16, None'"
-                )
+
+            # Show success message
+            QMessageBox.information(
+                self,
+                "Límites actualizados",
+                f"Límites de flujo actualizados:\n"
+                f"Mínimo: {self.fmin:.2e}\n"
+                f"Máximo: {self.fmax:.2e}"
+            )
+
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"Error al actualizar los límites de flujo:\n{str(e)}\n\n"
+                "Formato esperado: 'min, max' o 'auto'\n"
+                "Ejemplo: '1e-16, 1e-15' o 'None, 1e-15'"
+            )
 
     def Redshift(self):
         """
@@ -2500,6 +2118,9 @@ class CubeViewer(QWidget):
         tres_widget.setYRange(-0.1, 0.1)
         tres_widget.plot(self.wl, self.K.tres, pen=pg.mkPen('b', width=2))
         main_layout.addWidget(tres_widget)
+
+        # Instalar el filtro de eventos
+        self.installEventFilter(self)
 
         # Mostrar ventana
         self.residual_window.show()

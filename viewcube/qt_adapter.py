@@ -168,33 +168,73 @@ class CubeViewerAdapter:
     def on_mouse_moved(self, pos):
         """Maneja el movimiento del ratón sobre el spaxel"""
         try:
-            # Convertir posición de la escena a coordenadas de datos
-            view_pos = self.spaxel_widget.getViewBox().mapSceneToView(pos)
+            # Obtener la vista y verificar si está disponible
+            view = self.spaxel_widget.getViewBox()
+            if view is None:
+                return
+                
+            # Convertir la posición a coordenadas de la vista
+            view_pos = view.mapSceneToView(pos)
             x, y = int(view_pos.x()), int(view_pos.y())
             
             # Verificar límites
-            if (0 <= x < self.cube_viewer.nx and 
-                0 <= y < self.cube_viewer.ny):
-                # Obtener y mostrar espectro
-                spectrum = self.cube_viewer.getSpec(x, y)
-                if spectrum is not None:
-                    self.plot_spectrum(
-                        self.cube_viewer.wl,
-                        spectrum,
-                        self.cube_viewer.speccom
-                    )
+            if hasattr(self.cube_viewer, 'nx') and hasattr(self.cube_viewer, 'ny'):
+                if (0 <= x < self.cube_viewer.nx and 0 <= y < self.cube_viewer.ny):
+                    # Actualizar el espectro mostrado
+                    if hasattr(self.cube_viewer, 'getSpec'):
+                        spectrum = self.cube_viewer.getSpec(x, y)
+                        if spectrum is not None and hasattr(self.cube_viewer, 'wl'):
+                            self.plot_spectrum(
+                                self.cube_viewer.wl,
+                                spectrum,
+                                getattr(self.cube_viewer, 'speccom', None)
+                            )
+                            
+                            # Llamar al método del CubeViewer para manejar el movimiento
+                            if hasattr(self.cube_viewer, 'on_mouse_moved'):
+                                self.cube_viewer.on_mouse_moved(pos)
+                                
         except Exception as e:
-            print(f"Error procesando movimiento del ratón: {e}")
+            # Ignorar errores de interrupción de teclado
+            if not isinstance(e, KeyboardInterrupt):
+                print(f"Error procesando movimiento del ratón: {e}")
     
     def on_mouse_clicked(self, event):
         """Maneja el clic del ratón sobre el spaxel"""
-        if event.button() == Qt.LeftButton:
-            # Actualizar estado del botón
-            self.mouse_pressed = not self.mouse_pressed
+        try:
+            # Obtener la vista y verificar si está disponible
+            view = self.spaxel_widget.getViewBox()
+            if view is None:
+                return
+                
+            # Obtener la posición del evento
+            pos = event.scenePos() if hasattr(event, 'scenePos') else event
             
-            if not self.mouse_pressed:
-                # Si se suelta el botón, mantener el último espectro mostrado
-                pass
+            # Convertir la posición a coordenadas de la vista
+            view_pos = view.mapSceneToView(pos)
+            x, y = int(view_pos.x()), int(view_pos.y())
+            
+            # Verificar límites
+            if hasattr(self.cube_viewer, 'nx') and hasattr(self.cube_viewer, 'ny'):
+                if (0 <= x < self.cube_viewer.nx and 0 <= y < self.cube_viewer.ny):
+                    # Actualizar el espectro mostrado
+                    if hasattr(self.cube_viewer, 'getSpec') and hasattr(self.cube_viewer, 'wl'):
+                        spectrum = self.cube_viewer.getSpec(x, y)
+                        if spectrum is not None:
+                            self.plot_spectrum(
+                                self.cube_viewer.wl,
+                                spectrum,
+                                getattr(self.cube_viewer, 'speccom', None)
+                            )
+                            
+                            # Llamar al método del CubeViewer para manejar el clic
+                            if hasattr(self.cube_viewer, 'on_mouse_clicked'):
+                                self.cube_viewer.on_mouse_clicked(event)
+                                
+        except Exception as e:
+            # Ignorar errores de interrupción de teclado
+            if not isinstance(e, KeyboardInterrupt):
+                print(f"Error procesando clic del ratón: {e}")
     
     def show_lambda_limits_dialog(self):
         """Muestra el diálogo de límites lambda"""

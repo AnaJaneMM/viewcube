@@ -5,13 +5,14 @@ import sys
 import numpy as np
 import pyqtgraph as pg
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPalette, QColor
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QTabWidget,
                              QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSpinBox, QComboBox,
                              QFrame, QFileDialog, QAction, QGroupBox, QMessageBox, QDoubleSpinBox, QMenu, QSizePolicy,
                              QLineEdit, QCheckBox)
 from astropy.io import fits
 from config import strings, styles
-from viewcube import cubeviewer as cv
+from viewcube import cubeviewer_optimized_short as cv
 from viewcube.qt_adapter import CubeViewerAdapter
 
 # Configuración global de pyqtgraph
@@ -106,53 +107,51 @@ class SpaxelWidget(PlotWidget):
 
 class MainWindow(QMainWindow):
     def __init__(self):
-        super().__init__()
-        self.btn_search_comp_fits = None
-        self.comp_file_name_box = None
-        self.btn_search_table = None
-        self.position_table_box = None
-        self.file_name_box = None
-        self.btn_search_fits = None
-        self.angle_rotation_value = None
-        self.cube = None
-        self.cube_adapter = None
-        self.data = None
-        self.comparison_cube = None
-        self.position_table = None
-
-        # Initial window configuration
-        self.setWindowTitle(strings.WINDOW_TITLE)
-        self.setup_window_size()
-
-        # Central widget and main layout
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        main_layout = QHBoxLayout(central_widget)
-
-        # Menu
-        self.setup_menu()
-
-        # Configuration's frame
-        config_group = QGroupBox(strings.CONFIGURATION_FRAME)
-        config_layout = QVBoxLayout(config_group)
-        config_layout.setAlignment(Qt.AlignTop)
-        self.setup_config_panel(config_layout)
-        config_group.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
-
-        # Plot's frame
-        plots_group = QGroupBox(strings.PLOTS_FRAME)
-        workspace_layout = QVBoxLayout(plots_group)
-        self.setup_workspace_panel(workspace_layout)
-
-        # Add frames to main layout
-        main_layout.addWidget(config_group, 1)
-        main_layout.addWidget(plots_group, 3)
-
-        # Menu actions
-        self.connect_menu_actions()
-
-        # Mostrar la ventana maximizada
-        self.showMaximized()
+        try:
+            super().__init__()
+            
+            # Configurar la ventana principal
+            self.setWindowTitle("ViewCube")
+            self.setup_window_size()
+            
+            # Crear widget central
+            self.central_widget = QWidget()
+            self.setCentralWidget(self.central_widget)
+            
+            # Crear layout principal
+            self.main_layout = QVBoxLayout(self.central_widget)
+            self.main_layout.setContentsMargins(10, 10, 10, 10)
+            self.main_layout.setSpacing(10)
+            
+            # Inicializar variables
+            self.cube_viewer = None
+            self.current_file = None
+            self.current_table = None
+            self.current_comparison = None
+            
+            # Configurar la interfaz
+            self.setup_menu()
+            
+            # Crear layout para el panel de configuración
+            config_layout = QHBoxLayout()
+            self.setup_config_panel(config_layout)
+            self.main_layout.addLayout(config_layout)
+            
+            # Crear layout para el área de trabajo
+            workspace_layout = QVBoxLayout()
+            self.setup_workspace_panel(workspace_layout)
+            self.main_layout.addLayout(workspace_layout)
+            
+            # Conectar acciones del menú
+            self.connect_menu_actions()
+            
+            # Mostrar la ventana
+            self.show()
+            
+        except Exception as e:
+            QMessageBox.critical(None, "Error de Inicialización", 
+                               f"Error al inicializar la ventana principal: {str(e)}")
+            raise
 
     def setup_window_size(self):
         if platform.system() == "Windows":
@@ -436,40 +435,41 @@ class MainWindow(QMainWindow):
         layout.addLayout(load_layout)
 
     def setup_workspace_panel(self, layout):
-        """Configura el panel de trabajo"""
-        # Área de gráficos
-        plots_layout = QHBoxLayout()
-        
-        # Frame izquierdo (Spaxel)
-        ancho_spaxel = 710
-        alto_spaxel = 600
-        ancho_spectral = 800
-        alto_spectral = 500
-        spaxel_frame = QFrame()
-        spaxel_frame.setFrameStyle(QFrame.Box | QFrame.Raised)
-        spaxel_frame.setFixedSize(int(ancho_spaxel*0.70), int(alto_spaxel*0.70))
-        spaxel_layout = QVBoxLayout(spaxel_frame)
-        
-        # Frame derecho (Espectro)
-        spectrum_frame = QFrame()
-        spectrum_frame.setFrameStyle(QFrame.Box | QFrame.Raised)
-        spectrum_frame.setFixedSize(int(ancho_spectral*0.70), int(alto_spectral*0.70))
-        spectrum_layout = QVBoxLayout(spectrum_frame)
-        
-        # Añadir los frames al layout principal
-        plots_layout.addWidget(spaxel_frame)
-        plots_layout.addWidget(spectrum_frame)
-        
-        # Añadir el layout de gráficos al layout principal
-        layout.addLayout(plots_layout)
-        
-        # Configurar las proporciones del layout de gráficos
-        plots_layout.setStretch(0, 1)  # Spaxel
-        plots_layout.setStretch(1, 1)  # Spectrum
-        
-        # Guardar referencias a los layouts para usar más tarde
-        self.spaxel_layout = spaxel_layout
-        self.spectrum_layout = spectrum_layout
+        """Configura el panel de trabajo con los gráficos"""
+        try:
+            # Crear un layout horizontal para los gráficos
+            graphics_layout = QHBoxLayout()
+            graphics_layout.setContentsMargins(0, 0, 0, 0)
+            graphics_layout.setSpacing(5)
+            
+            # Configurar el widget de spaxels
+            self.spaxel_widget = pg.GraphicsLayoutWidget()
+            self.spaxel_widget.setObjectName("spaxel_widget")
+            self.spaxel_widget.setMinimumSize(600, 600)
+            self.spaxel_plot = self.spaxel_widget.addPlot()
+            self.spaxel_plot.showGrid(x=True, y=True)
+            
+            # Configurar el widget de espectros
+            self.spectrum_widget = pg.GraphicsLayoutWidget()
+            self.spectrum_widget.setObjectName("spectrum_widget")
+            self.spectrum_widget.setMinimumSize(600, 600)
+            self.spectrum_plot = self.spectrum_widget.addPlot()
+            self.spectrum_plot.showGrid(x=True, y=True)
+            
+            # Añadir widgets al layout con stretch para que ocupen el mismo espacio
+            graphics_layout.addWidget(self.spaxel_widget, stretch=1)
+            graphics_layout.addWidget(self.spectrum_widget, stretch=1)
+            
+            # Añadir el layout de gráficos al layout principal
+            layout.addLayout(graphics_layout)
+            
+            # Guardar referencias
+            self.plots_layout = graphics_layout
+            
+        except Exception as e:
+            QMessageBox.critical(None, "Error", 
+                               f"Error al inicializar el panel de trabajo: {str(e)}")
+            raise
 
     def connect_menu_actions(self):
         """Conecta las acciones del menú con sus funciones correspondientes"""
@@ -507,29 +507,28 @@ class MainWindow(QMainWindow):
     def create_new_workspace(self):
         """Crea un nuevo espacio de trabajo"""
         # Limpiar datos existentes
-        self.cube = None
-        self.cube_adapter = None
-        self.data = None
-        self.comparison_cube = None
-        self.position_table = None
+        self.cube_viewer = None
+        self.current_file = None
+        self.current_table = None
+        self.current_comparison = None
 
         # Limpiar gráficos
-        if self.cube_adapter:
-            self.cube_adapter.spaxel_widget.clear_graph()
-            self.cube_adapter.spectrum_widget.clear_graph()
+        if self.cube_viewer:
+            self.cube_viewer.spaxel_widget.clear_graph()
+            self.cube_viewer.spectrum_widget.clear_graph()
 
         # Resetear título
-        self.setWindowTitle(strings.WINDOW_TITLE)
+        self.setWindowTitle("ViewCube")
 
     def show_window_manager(self):
         """Muestra el administrador de ventanas"""
-        if self.cube:
-            self.cube.WindowManager()
+        if self.cube_viewer:
+            self.cube_viewer.WindowManager()
 
     def show_lambda_limits(self):
         """Muestra el diálogo de límites lambda"""
-        if self.cube_adapter:
-            self.cube_adapter.show_lambda_limits_dialog()
+        if self.cube_viewer:
+            self.cube_viewer.show_lambda_limits_dialog()
         else:
             QMessageBox.warning(self, "Error", "Primero debe cargar un archivo FITS")
 
@@ -537,13 +536,13 @@ class MainWindow(QMainWindow):
         """Method event linked to the search of a FITS file."""
         file_path, _ = QFileDialog.getOpenFileName(self, strings.SEARCH_FITS_MSG, "", strings.SEARCH_FITS_FILTER)
         if file_path:
-            self.selected_fits_file = file_path
+            self.current_file = file_path
             self.file_name_box.setText(os.path.basename(file_path))
             self.btn_load.setEnabled(True)
     
     def on_load_clicked(self):
         """Maneja el evento de clic en el botón de carga"""
-        if hasattr(self, 'selected_fits_file'):
+        if hasattr(self, 'current_file'):
             try:
                 # Crear el diccionario de kwargs con la configuración actual
                 kwargs = {
@@ -557,41 +556,33 @@ class MainWindow(QMainWindow):
                 }
                 
                 # Crear instancia de CubeViewer con los parámetros actuales
-                self.cube = cv.CubeViewer(
-                    name_fits=self.selected_fits_file,
-                    ptable=self.position_table,
-                    fitscom=self.comparison_cube,
+                self.cube_viewer = cv.CubeViewer(
+                    name_fits=self.current_file,
+                    ptable=self.position_table_box.text(),
+                    fitscom=self.comp_file_name_box.text(),
                     **kwargs
                 )
                 
                 # Limpiar los layouts existentes
-                for i in reversed(range(self.spaxel_layout.count())): 
-                    widget = self.spaxel_layout.itemAt(i).widget()
-                    if widget is not None:
-                        widget.setParent(None)
-                
-                for i in reversed(range(self.spectrum_layout.count())):
-                    widget = self.spectrum_layout.itemAt(i).widget()
-                    if widget is not None:
-                        widget.setParent(None)
+                self.plots_layout.clear()
                 
                 # Crear el adaptador para PyQtGraph
-                self.cube_adapter = CubeViewerAdapter(self.cube)
+                self.cube_viewer_adapter = CubeViewerAdapter(self.cube_viewer)
                 
-                # Añadir los nuevos widgets
-                self.spaxel_layout.addWidget(self.cube_adapter.spaxel_widget)
-                self.spectrum_layout.addWidget(self.cube_adapter.spectrum_widget)
+                # Añadir los nuevos widgets a los layouts de GraphicsLayoutWidget
+                self.spaxel_widget.addItem(self.cube_viewer_adapter.spaxel_widget.plotItem)
+                self.spectrum_widget.addItem(self.cube_viewer_adapter.spectrum_widget.plotItem)
                 
                 # Actualizar título de la ventana
-                self.setWindowTitle(f"{strings.WINDOW_TITLE} - {os.path.basename(self.selected_fits_file)}")
+                self.setWindowTitle(f"ViewCube - {os.path.basename(self.current_file)}")
                 
                 # Mostrar información del archivo
                 try:
                     info = [
-                        fits_file_info(self.selected_fits_file),
+                        fits_file_info(self.current_file),
                         "",
                         "Información del cubo:",
-                        self.cube.get_info()
+                        self.cube_viewer.get_info()
                     ]
                     QMessageBox.information(self, "Información del archivo", "\n".join(info))
                 except Exception as e:
@@ -599,10 +590,10 @@ class MainWindow(QMainWindow):
                 
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Error al cargar el archivo:\n{str(e)}")
-                self.data = None
-                self.cube = None
-                self.cube_adapter = None
-                self.setWindowTitle(strings.WINDOW_TITLE)
+                self.current_file = None
+                self.cube_viewer = None
+                self.cube_viewer_adapter = None
+                self.setWindowTitle("ViewCube")
         else:
             QMessageBox.warning(self, "Error", "Por favor, seleccione un archivo FITS primero")
 
@@ -610,11 +601,11 @@ class MainWindow(QMainWindow):
         file_path, _ = QFileDialog.getOpenFileName(self, strings.SEARCH_POSITION_TABLE_MSG, "", strings.SEARCH_ALL_FILES)
         if file_path:
             try:
-                self.position_table = file_path     # load position table
+                self.current_table = file_path     # load position table
 
                 # update with new table if cube is loading
-                if self.cube:
-                    self.cube.ptable = self.position_table
+                if self.cube_viewer:
+                    self.cube_viewer.ptable = self.current_table
                     self.update_visualizations()
 
                 QMessageBox.information(self, strings.GENERIC_SUCCESS_TITLE, strings.POSITION_TABLE_LOADED)
@@ -626,85 +617,80 @@ class MainWindow(QMainWindow):
         file_path, _ = QFileDialog.getOpenFileName(self, strings.SEARCH_COMPARISSON_FITS_MSG, "", strings.SEARCH_FITS_FILTER)
         if file_path:
             try:
-                self.comparison_cube = file_path
+                self.current_comparison = file_path
 
                 # update cube if another cube is already loaded
-                if self.cube:
-                    self.cube.fitscom = self.comparison_cube
+                if self.cube_viewer:
+                    self.cube_viewer.fitscom = self.current_comparison
                     self.comp_file_name_box.setText(os.path.basename(file_path))
                     print(os.path.basename(file_path))
-                    self.load_fits_file(self.cube.name_fits)
+                    self.load_fits_file(self.cube_viewer.name_fits)
                 
                 QMessageBox.information(self, strings.GENERIC_SUCCESS_TITLE, strings.COMPARISON_FILE_LOADED)
             except Exception as e:
                 QMessageBox.critical(self, strings.GENERIC_ERROR_TITLE, strings.ERROR_LOADING_COMPARISON_FITS_FILE + str(e))
-                self.comparison_cube = None
+                self.current_comparison = None
 
     def update_cube_parameters(self):
         """Actualiza los parámetros del cubo cuando cambian los controles"""
-        if self.cube:
+        if self.cube_viewer:
             try:
                 # Actualizar extensiones
-                self.cube.kwargs['exdata'] = self.data_ext_spin.value() if self.data_ext_spin.value() > 0 else None
-                self.cube.kwargs['exhdr'] = self.header_ext_spin.value()
-                self.cube.kwargs['exerror'] = self.error_ext_spin.value() if self.error_ext_spin.value() > 0 else None
-                self.cube.kwargs['exflag'] = self.flag_ext_spin.value() if self.flag_ext_spin.value() > 0 else None
+                self.cube_viewer.kwargs['exdata'] = self.data_ext_spin.value() if self.data_ext_spin.value() > 0 else None
+                self.cube_viewer.kwargs['exhdr'] = self.header_ext_spin.value()
+                self.cube_viewer.kwargs['exerror'] = self.error_ext_spin.value() if self.error_ext_spin.value() > 0 else None
+                self.cube_viewer.kwargs['exflag'] = self.flag_ext_spin.value() if self.flag_ext_spin.value() > 0 else None
 
                 # Actualizar factores de multiplicación
-                self.cube.kwargs['fo'] = self.fo_factor_spin.value()
-                self.cube.kwargs['fc'] = self.fc_factor_spin.value()
+                self.cube_viewer.kwargs['fo'] = self.fo_factor_spin.value()
+                self.cube_viewer.kwargs['fc'] = self.fc_factor_spin.value()
 
                 # Actualizar otros parámetros
-                self.cube.kwargs['ivar'] = self.ivar_combo.currentText() == "True"
+                self.cube_viewer.kwargs['ivar'] = self.ivar_combo.currentText() == "True"
 
                 # Recargar el cubo con los nuevos parámetros
-                self.load_fits_file(self.cube.name_fits)
+                self.load_fits_file(self.cube_viewer.name_fits)
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Error actualizando parámetros: {str(e)}")
-
-    def load_fits_file(self, file_path):
-        """Carga un archivo FITS y actualiza las visualizaciones"""
         try:
-            # Crear instancia de CubeViewer con los parámetros de la interfaz
-            self.cube = cv.CubeViewer(
-                name_fits=file_path,
-                ptable=self.position_table,
-                fitscom=self.comparison_cube,
-                exdata=self.data_ext_spin.value() if self.data_ext_spin.value() > 0 else None,
-                exhdr=self.header_ext_spin.value(),
-                exerror=self.error_ext_spin.value() if self.error_ext_spin.value() > 0 else None,
-                exflag=self.flag_ext_spin.value() if self.flag_ext_spin.value() > 0 else None,
-                ivar=self.ivar_combo.currentText() == "True"
+            # Crear el diccionario de kwargs con la configuración actual
+            kwargs = {
+                'exdata': self.data_ext_spin.value() if self.data_ext_spin.value() > 0 else None,
+                'exhdr': self.header_ext_spin.value(),
+                'exerror': self.error_ext_spin.value() if self.error_ext_spin.value() > 0 else None,
+                'exflag': self.flag_ext_spin.value() if self.flag_ext_spin.value() > 0 else None,
+                'fo': self.fo_factor_spin.value(),
+                'fc': self.fc_factor_spin.value(),
+                'ivar': self.ivar_combo.currentText() == "True"
+            }
+            
+            # Crear instancia de CubeViewer con los parámetros actuales
+            self.cube_viewer = cv.CubeViewer(
+                name_fits=self.current_file,
+                ptable=self.position_table_box.text(),
+                fitscom=self.comp_file_name_box.text(),
+                **kwargs
             )
             
             # Limpiar los layouts existentes
-            for i in reversed(range(self.spaxel_layout.count())): 
-                widget = self.spaxel_layout.itemAt(i).widget()
-                if widget is not None:
-                    widget.setParent(None)
-            
-            for i in reversed(range(self.spectrum_layout.count())):
-                widget = self.spectrum_layout.itemAt(i).widget()
-                if widget is not None:
-                    widget.setParent(None)
+            self.plots_layout.clear()
             
             # Crear el adaptador para PyQtGraph
-            self.cube_adapter = CubeViewerAdapter(self.cube)
+            self.cube_viewer_adapter = CubeViewerAdapter(self.cube_viewer)
             
-            # Añadir los nuevos widgets
-            self.spaxel_layout.addWidget(self.cube_adapter.spaxel_widget)
-            self.spectrum_layout.addWidget(self.cube_adapter.spectrum_widget)
+            # Añadir los nuevos widgets a los layouts de GraphicsLayoutWidget
+            self.spaxel_widget.addItem(self.cube_viewer_adapter.spaxel_widget.plotItem)
+            self.spectrum_widget.addItem(self.cube_viewer_adapter.spectrum_widget.plotItem)
             
             # Actualizar título de la ventana
-            self.setWindowTitle(f"{strings.WINDOW_TITLE} - {os.path.basename(file_path)}")
+            self.setWindowTitle(f"ViewCube - {os.path.basename(self.current_file)}")
             
             # Mostrar información del archivo
             try:
                 info = [
-                    fits_file_info(file_path),
+                    fits_file_info(self.current_file),
                     "",
                     "Información del cubo:",
-                    self.cube.get_info()
+                    self.cube_viewer.get_info()
                 ]
                 QMessageBox.information(self, "Información del archivo", "\n".join(info))
             except Exception as e:
@@ -712,45 +698,78 @@ class MainWindow(QMainWindow):
             
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error al cargar el archivo:\n{str(e)}")
-            self.data = None
-            self.cube = None
-            self.cube_adapter = None
-            self.setWindowTitle(strings.WINDOW_TITLE)
+            self.current_file = None
+            self.cube_viewer = None
+            self.cube_viewer_adapter = None
+            self.setWindowTitle("ViewCube")
+    else:
+        QMessageBox.warning(self, "Error", "Por favor, seleccione un archivo FITS primero")
 
-    def update_visualizations(self):
-        """Actualiza las visualizaciones de spaxel y espectro"""
-        if self.cube_adapter:
-            self.cube_adapter.update_visualizations()
+def on_search_table(self):
+    file_path, _ = QFileDialog.getOpenFileName(self, strings.SEARCH_POSITION_TABLE_MSG, "", strings.SEARCH_ALL_FILES)
+    if file_path:
+        try:
+            self.current_table = file_path     # load position table
 
-    def save_spectrum(self):
-        """Guarda el espectro actual"""
-        if self.cube:
-            self.cube.SaveFile()
+            # update with new table if cube is loading
+            if self.cube_viewer:
+                self.cube_viewer.ptable = self.current_table
+                self.update_visualizations()
 
-    def show_sonification(self):
-        """Muestra la interfaz de sonificación"""
-        if self.cube:
-            self.cube.Sonification()
+            QMessageBox.information(self, strings.GENERIC_SUCCESS_TITLE, strings.POSITION_TABLE_LOADED)
+        except Exception as e:
+            QMessageBox.critical(self, strings.GENERIC_ERROR_TITLE, strings.ERROR_LOADING_POS_TABLE + str(e))
 
-    def show_residuals(self):
-        """Muestra el visor de residuos"""
-        if self.cube_adapter and self.comparison_cube:
-            self.cube_adapter.show_residuals()
-        else:
+def on_search_comparison(self):
+    """Method event linked to the search of a comparison FITS file."""
+    file_path, _ = QFileDialog.getOpenFileName(self, strings.SEARCH_COMPARISSON_FITS_MSG, "", strings.SEARCH_FITS_FILTER)
+    if file_path:
+        try:
+            self.current_comparison = file_path
             QMessageBox.warning(self, "Error",
                               "Para ver residuos, primero debe cargar un archivo de comparación")
 
     def fit_spectrum(self):
         """Muestra la interfaz de ajuste de espectro"""
-        if self.cube:
-            self.cube.FitSpec(None)
+        if self.cube_viewer:
+            self.cube_viewer.FitSpec(None)
 
 
 def main():
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec_())
+    try:
+        # Crear la aplicación
+        app = QApplication(sys.argv)
+        
+        # Configurar el estilo
+        app.setStyle('Fusion')
+        
+        # Configurar paleta de colores
+        palette = QPalette()
+        palette.setColor(QPalette.Window, QColor(240, 240, 240))
+        palette.setColor(QPalette.WindowText, QColor(0, 0, 0))
+        app.setPalette(palette)
+        
+        # Configurar pyqtgraph
+        pg.setConfigOption('background', 'w')
+        pg.setConfigOption('foreground', 'k')
+        pg.setConfigOption('antialias', True)
+        
+        # Crear y mostrar la ventana principal
+        window = MainWindow()
+        window.show()
+        
+        # Iniciar el bucle de eventos
+        sys.exit(app.exec_())
+        
+    except Exception as e:
+        # Mostrar mensaje de error
+        error_msg = QMessageBox()
+        error_msg.setIcon(QMessageBox.Critical)
+        error_msg.setWindowTitle("Error Fatal")
+        error_msg.setText("Error al iniciar la aplicación")
+        error_msg.setInformativeText(str(e))
+        error_msg.exec_()
+        return 1
 
 
 if __name__ == '__main__':
