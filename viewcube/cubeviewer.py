@@ -16,8 +16,8 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
 from PyQt5.QtCore import Qt, QRectF, QPointF
 from PyQt5.QtGui import QColor, QPen, QBrush
 import pyqtgraph as pg
-from .utils import lsfiles, ckfiles, LoadFits, image_max_pixel
-from .utils import save_spec, convert2iraf_spec, get_min_max
+from viewcube.utils import lsfiles, ckfiles, LoadFits, image_max_pixel
+from viewcube.utils import save_spec, convert2iraf_spec, get_min_max
 import astropy.io.fits as pyfits
 from astropy import units as u
 from astropy.wcs import WCS
