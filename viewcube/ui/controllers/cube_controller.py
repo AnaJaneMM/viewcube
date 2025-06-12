@@ -3,11 +3,11 @@
 import numpy as np
 import os
 from typing import Optional, Tuple, List
-from ..data.data_manager import DataManager, SpectrumData
-from ..data.filter_manager import FilterManager
-from ..views.spaxel_viewer import SpaxelViewer
-from ..views.spectrum_viewer import SpectrumViewer
-from ..utils.geometry_utils import GeometryUtils
+from viewcube.data import DataManager, SpectrumData
+from viewcube.data.filter_manager import FilterManager
+from viewcube.ui.views import SpaxelViewer
+from viewcube.ui.views import SpectrumViewer
+from viewcube.utils.geometry_utils import GeometryUtils
 
 
 class CubeController:
@@ -395,7 +395,7 @@ class CubeController:
                               filename: str, save_fits: bool, save_txt: bool,
                               info: str = "") -> None:
         """Guarda un espectro individual."""
-        from ..utils import save_spec
+        from viewcube.utils import save_spec
 
         header_info = None
         if hasattr(self.data_manager.primary_data, 'header'):
