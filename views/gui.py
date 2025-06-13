@@ -1,7 +1,8 @@
 import os
 import platform
 import sys
-
+import logging as log
+import colorlog
 import numpy as np
 import pyqtgraph as pg
 from PyQt5.QtCore import Qt
@@ -10,7 +11,7 @@ from PyQt5.QtWidgets import (QMainWindow, QApplication, QWidget, QTabWidget,
                              QFrame, QFileDialog, QAction, QGroupBox, QMessageBox, QDoubleSpinBox, QMenu, QSizePolicy,
                              QLineEdit, QCheckBox)
 from astropy.io import fits
-from config import strings, styles
+from config import strings, styles, settings
 from viewcube import cubeviewer as cv
 from viewcube.qt_adapter import CubeViewerAdapter
 
@@ -107,6 +108,18 @@ class SpaxelWidget(PlotWidget):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+
+        # log functionality
+        handler = colorlog.StreamHandler()
+        handler.setFormatter(colorlog.ColoredFormatter(
+            settings.FMT_LOG,
+            log_colors={'DEBUG': 'cyan','INFO': 'green','WARNING': 'yellow','ERROR': 'red','CRITICAL': 'bold_red'}
+        ))
+        logger = colorlog.getLogger()
+        logger.setLevel('DEBUG')
+        logger.addHandler(handler)
+
+        # values
         self.btn_search_comp_fits = None
         self.comp_file_name_box = None
         self.btn_search_table = None
