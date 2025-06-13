@@ -1,118 +1,101 @@
-"""
-Configuration Manager para ViewCube
-Gestiona toda la configuración del sistema de forma centralizada
-"""
 import os
-import configparser
-import ast
-from typing import Dict, Any, Optional
-from dataclasses import dataclass
-
-
-@dataclass
-class ViewCubeConfig:
-    """Configuración principal de ViewCube"""
-    # Extensiones de datos
-    exdata: Optional[int] = None
-    exhdr: int = 0
-    exwave: Optional[int] = None
-    exflag: Optional[int] = None
-    exerror: Optional[int] = None
-    specaxis: Optional[int] = None
-
-    # Directorios
-    dfilter: Optional[str] = "filters/"
-    dsoni: Optional[str] = None
-
-    # Configuración de visualización
-    norm: str = "sqrt"
-    default_filter: Optional[str] = None
-    mval: float = 0.0
-    palpha: float = 0.95
-    plw: float = 0.1
-    plc: str = "k"
-
-    # Límites y factores
-    wlim: Optional[tuple] = None
-    flim: Optional[tuple] = None
-    fp: float = 1.2
-
-    # Tamaños de ventana
-    fig_spaxel_size: tuple = (7.1, 6)
-    fig_spectra_size: tuple = (8, 5)
-    fig_window_manager: tuple = (5, 5)
-
-    # Constantes físicas
-    c: float = 299792.458
-
-    # Configuración de modo
-    ref_mode: str = "crpix"
-    soni_start: bool = False
-    colorbar: bool = True
-    masked: bool = True
-    vflag: int = 0
+import yaml
+from pathlib import Path
+from typing import Dict, Any
+from ..core.interfaces.repository_interfaces import ConfigRepositoryInterface
 
 
 class ConfigurationManager:
-    """Gestor centralizado de configuración"""
+    """Gestor centralizado de configuración del sistema"""
 
-    def __init__(self, config_file: str = "viewcuberc"):
-        self.config_file = config_file
-        self.config_path = self._get_config_path()
-        self._config = ViewCubeConfig()
-        self._load_config()
+    _instance = None
 
-    def _get_config_path(self) -> str:
-        """Obtiene la ruta del archivo de configuración"""
-        local_config = os.path.join(os.curdir, self.config_file)
-        if os.path.exists(local_config):
-            return local_config
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._init_manager()
+        return cls._instance
 
-        home_config = os.path.join(os.environ.get('HOME', ''), '.' + self.config_file)
-        return home_config
+    def _init_manager(self):
+        """Inicialización interna del gestor"""
+        self._default_config = {
+            'display': {
+                'colormap': 'viridis',
+                'norm': 'sqrt',
+                'default_filter': 'Halpha_KPNO-NOAO',
+                'figsize': {'width': 12, 'height': 8}
+            },
+            'data': {
+                'fits': {
+                    'auto_detect': True,
+                    'guess_extensions': True,
+                    'supported_instruments': ['CALIFA', 'MANGA', 'MUSE', 'WEAVE']
+                }
+            },
+            'performance': {
+                'cache_size': '1GB',
+                'parallel_processing': False
+            }
+        }
+        self._user_config = {}
+        self._config_path = Path.home() / '.viewcube' / 'config.yml'
+        self._repo = ConfigRepositoryInterface()
 
-    def _load_config(self) -> None:
-        """Carga la configuración desde archivo"""
-        if not os.path.exists(self.config_path):
-            return
+    def load_config(self) -> Dict[str, Any]:
+        """Carga la configuración combinando valores por defecto y usuario"""
+        if not os.path.exists(self._config_path):
+            return self._default_config
 
-        try:
-            parser = configparser.ConfigParser()
-            parser.read(self.config_path)
+        user_config = self._repo.load_config(str(self._config_path))
+        return self._deep_merge(self._default_config, user_config)
 
-            if 'VIEWCUBE' in parser:
-                for key, value in parser['VIEWCUBE'].items():
-                    if hasattr(self._config, key):
-                        try:
-                            parsed_value = ast.literal_eval(value)
-                            setattr(self._config, key, parsed_value)
-                        except (ValueError, SyntaxError):
-                            setattr(self._config, key, value)
-        except Exception as e:
-            print(f"Warning: Error loading config: {e}")
+    def save_config(self, config: Dict[str, Any]) -> None:
+        """Guarda la configuración del usuario"""
+        self._repo.save_config(config, str(self._config_path))
 
-    def save_config(self) -> None:
-        """Guarda la configuración actual"""
-        parser = configparser.ConfigParser()
-        parser['VIEWCUBE'] = {}
+    def get_default_config(self) -> Dict[str, Any]:
+        """Devuelve la configuración por defecto"""
+        return self._default_config.copy()
 
-        for field_name, field_value in self._config.__dict__.items():
-            parser['VIEWCUBE'][field_name] = str(field_value)
+    def get_current_config(self) -> Dict[str, Any]:
+        """Devuelve la configuración actual en uso"""
+        return self.load_config()
 
-        with open(self.config_path, 'w') as f:
-            parser.write(f)
+    def reset_to_defaults(self) -> None:
+        """Restaura la configuración a los valores por defecto"""
+        if os.path.exists(self._config_path):
+            os.remove(self._config_path)
+        self._user_config = {}
 
-    def get_config(self) -> ViewCubeConfig:
-        """Obtiene la configuración actual"""
-        return self._config
+    def _deep_merge(self, base: Dict, update: Dict) -> Dict:
+        """Fusión recursiva de diccionarios"""
+        for key, value in update.items():
+            if isinstance(value, dict):
+                node = base.setdefault(key, {})
+                self._deep_merge(node, value)
+            else:
+                base[key] = value
+        return base
 
-    def update_config(self, **kwargs) -> None:
-        """Actualiza la configuración con nuevos valores"""
-        for key, value in kwargs.items():
-            if hasattr(self._config, key):
-                setattr(self._config, key, value)
+    def get(self, key: str, default=None) -> Any:
+        """Obtiene un valor de configuración por clave"""
+        keys = key.split('.')
+        current = self.load_config()
 
-    def create_default_config(self) -> None:
-        """Crea un archivo de configuración por defecto"""
-        self.save_config()
-        print(f'*** ViewCube Config File "{self.config_path}" created! ***')
+        for k in keys:
+            current = current.get(k, {})
+            if not isinstance(current, dict):
+                break
+
+        return current if current is not {} else default
+
+    def set(self, key: str, value: Any) -> None:
+        """Establece un valor de configuración"""
+        keys = key.split('.')
+        current = self._user_config
+
+        for k in keys[:-1]:
+            current = current.setdefault(k, {})
+
+        current[keys[-1]] = value
+        self.save_config(self._user_config)
