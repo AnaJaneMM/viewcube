@@ -179,7 +179,7 @@ class MainWindow(QMainWindow):
     def setup_menu(self):
         menubar = self.menuBar()
 
-        log.debug('Setting up the main menu bar')
+        log.debug('Configurando la barra de menú principal')
 
         # Menú Archivo
         file_menu = menubar.addMenu(strings.FILE_MENU)
@@ -209,6 +209,18 @@ class MainWindow(QMainWindow):
         lambda_limits_action.setShortcut('Ctrl+L')
         manager_menu.addAction(lambda_limits_action)
 
+        flux_limits_action = QAction("Límites de flujo", self)
+        flux_limits_action.setShortcut('Ctrl+F')
+        manager_menu.addAction(flux_limits_action)
+
+        redshift_action = QAction("Redshift", self)
+        redshift_action.setShortcut('Ctrl+Z')
+        manager_menu.addAction(redshift_action)
+
+        rest_wave_action = QAction("Longitud de onda en reposo", self)
+        rest_wave_action.setShortcut('Ctrl+R')
+        manager_menu.addAction(rest_wave_action)
+
         # Menú Herramientas
         tools_menu = menubar.addMenu(strings.TOOLS_MENU)
         tools_menu.setObjectName(strings.TOOLS_MENU)
@@ -218,12 +230,75 @@ class MainWindow(QMainWindow):
         tools_menu.addAction(sonification_action)
 
         residual_action = QAction(strings.VIEW_RESIDUALS, self)
-        residual_action.setShortcut('Ctrl+R')
+        residual_action.setShortcut('Ctrl+D')
         tools_menu.addAction(residual_action)
 
         fit_action = QAction(strings.FIT_SPECTRUM, self)
-        fit_action.setShortcut('Ctrl+F')
+        fit_action.setShortcut('Ctrl+T')
         tools_menu.addAction(fit_action)
+
+        synth_spec_action = QAction("Espectro sintético", self)
+        synth_spec_action.setShortcut('Ctrl+Y')
+        tools_menu.addAction(synth_spec_action)
+
+        error_spec_action = QAction("Espectro de error", self)
+        error_spec_action.setShortcut('Ctrl+E')
+        tools_menu.addAction(error_spec_action)
+
+        res_spec_action = QAction("Espectro residual", self)
+        res_spec_action.setShortcut('Ctrl+X')
+        tools_menu.addAction(res_spec_action)
+
+        # Menú Visualización
+        view_menu = menubar.addMenu("Visualización")
+        view_menu.setObjectName("Visualización")
+
+        change_filter_action = QAction("Cambiar filtro", self)
+        change_filter_action.setShortcut('Ctrl+G')
+        view_menu.addAction(change_filter_action)
+
+        spectra_viewer_action = QAction("Visor de espectros", self)
+        spectra_viewer_action.setShortcut('Ctrl+V')
+        view_menu.addAction(spectra_viewer_action)
+
+        change_spaxel_action = QAction("Cambiar vista de spaxel", self)
+        change_spaxel_action.setShortcut('Ctrl+B')
+        view_menu.addAction(change_spaxel_action)
+
+        select_zone_action = QAction("Seleccionar zona", self)
+        select_zone_action.setShortcut('Ctrl+A')
+        view_menu.addAction(select_zone_action)
+
+        # Menú Ayuda
+        help_menu = menubar.addMenu("Ayuda")
+        help_menu.setObjectName("Ayuda")
+
+        about_action = QAction("Acerca de", self)
+        about_action.setShortcut('F1')
+        help_menu.addAction(about_action)
+
+        # Conectar acciones
+        open_action.triggered.connect(self.on_search_fits)
+        new_workspace_action.triggered.connect(self.create_new_workspace)
+        save_action.triggered.connect(self.save_spectrum)
+        window_manager_action.triggered.connect(self.show_window_manager)
+        lambda_limits_action.triggered.connect(self.show_lambda_limits)
+        flux_limits_action.triggered.connect(self.show_flux_limits)
+        redshift_action.triggered.connect(self.show_redshift)
+        rest_wave_action.triggered.connect(self.show_rest_wave)
+        sonification_action.triggered.connect(self.show_sonification)
+        residual_action.triggered.connect(self.show_residuals)
+        fit_action.triggered.connect(self.fit_spectrum)
+        synth_spec_action.triggered.connect(self.show_synth_spec)
+        error_spec_action.triggered.connect(self.show_error_spec)
+        res_spec_action.triggered.connect(self.show_res_spec)
+        change_filter_action.triggered.connect(self.change_filter)
+        spectra_viewer_action.triggered.connect(self.show_spectra_viewer)
+        change_spaxel_action.triggered.connect(self.change_spaxel_viewer)
+        select_zone_action.triggered.connect(self.select_zone)
+        about_action.triggered.connect(self.show_about)
+
+        log.info('Barra de menú configurada exitosamente')
 
     def setup_config_panel(self, layout):
         # FITS File Path
@@ -766,6 +841,104 @@ class MainWindow(QMainWindow):
         """Muestra la interfaz de ajuste de espectro"""
         if self.cube:
             self.cube.FitSpec(None)
+
+    def show_flux_limits(self):
+        """Muestra el diálogo de límites de flujo"""
+        if self.cube_adapter:
+            log.debug('Mostrando diálogo de límites de flujo')
+            self.cube_adapter.show_flux_limits_dialog()
+        else:
+            log.warning('No hay cubo cargado, no se pueden mostrar los límites de flujo')
+            QMessageBox.warning(self, "Error", "Primero debe cargar un archivo FITS")
+
+    def show_redshift(self):
+        """Muestra el diálogo de redshift"""
+        if self.cube_adapter:
+            log.debug('Mostrando diálogo de redshift')
+            self.cube_adapter.show_redshift_dialog()
+        else:
+            log.warning('No hay cubo cargado, no se puede mostrar el diálogo de redshift')
+            QMessageBox.warning(self, "Error", "Primero debe cargar un archivo FITS")
+
+    def show_rest_wave(self):
+        """Muestra el diálogo de longitud de onda en reposo"""
+        if self.cube_adapter:
+            log.debug('Mostrando diálogo de longitud de onda en reposo')
+            self.cube_adapter.show_rest_wave_dialog()
+        else:
+            log.warning('No hay cubo cargado, no se puede mostrar el diálogo de longitud de onda en reposo')
+            QMessageBox.warning(self, "Error", "Primero debe cargar un archivo FITS")
+
+    def show_synth_spec(self):
+        """Muestra el diálogo de espectro sintético"""
+        if self.cube_adapter:
+            log.debug('Mostrando diálogo de espectro sintético')
+            self.cube_adapter.show_synth_spec_dialog()
+        else:
+            log.warning('No hay cubo cargado, no se puede mostrar el diálogo de espectro sintético')
+            QMessageBox.warning(self, "Error", "Primero debe cargar un archivo FITS")
+
+    def show_error_spec(self):
+        """Muestra el diálogo de espectro de error"""
+        if self.cube_adapter:
+            log.debug('Mostrando diálogo de espectro de error')
+            self.cube_adapter.show_error_spec_dialog()
+        else:
+            log.warning('No hay cubo cargado, no se puede mostrar el diálogo de espectro de error')
+            QMessageBox.warning(self, "Error", "Primero debe cargar un archivo FITS")
+
+    def show_res_spec(self):
+        """Muestra el diálogo de espectro residual"""
+        if self.cube_adapter:
+            log.debug('Mostrando diálogo de espectro residual')
+            self.cube_adapter.show_res_spec_dialog()
+        else:
+            log.warning('No hay cubo cargado, no se puede mostrar el diálogo de espectro residual')
+            QMessageBox.warning(self, "Error", "Primero debe cargar un archivo FITS")
+
+    def change_filter(self):
+        """Cambia el filtro actual"""
+        if self.cube_adapter:
+            log.debug('Cambiando filtro')
+            self.cube_adapter.change_filter()
+        else:
+            log.warning('No hay cubo cargado, no se puede cambiar el filtro')
+            QMessageBox.warning(self, "Error", "Primero debe cargar un archivo FITS")
+
+    def show_spectra_viewer(self):
+        """Muestra el visor de espectros"""
+        if self.cube_adapter:
+            log.debug('Mostrando visor de espectros')
+            self.cube_adapter.show_spectra_viewer()
+        else:
+            log.warning('No hay cubo cargado, no se puede mostrar el visor de espectros')
+            QMessageBox.warning(self, "Error", "Primero debe cargar un archivo FITS")
+
+    def change_spaxel_viewer(self):
+        """Cambia la vista de spaxel"""
+        if self.cube_adapter:
+            log.debug('Cambiando vista de spaxel')
+            self.cube_adapter.change_spaxel_viewer()
+        else:
+            log.warning('No hay cubo cargado, no se puede cambiar la vista de spaxel')
+            QMessageBox.warning(self, "Error", "Primero debe cargar un archivo FITS")
+
+    def select_zone(self):
+        """Activa la selección de zona"""
+        if self.cube_adapter:
+            log.debug('Activando selección de zona')
+            self.cube_adapter.select_zone()
+        else:
+            log.warning('No hay cubo cargado, no se puede activar la selección de zona')
+            QMessageBox.warning(self, "Error", "Primero debe cargar un archivo FITS")
+
+    def show_about(self):
+        """Muestra el diálogo Acerca de"""
+        log.debug('Mostrando diálogo Acerca de')
+        QMessageBox.about(self, "Acerca de ViewCube",
+                         "ViewCube - Visor de cubos de datos\n\n"
+                         "Versión 1.0\n\n"
+                         "Una herramienta para visualizar y analizar cubos de datos astronómicos.")
 
 
 def main():
