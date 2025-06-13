@@ -547,7 +547,7 @@ class MainWindow(QMainWindow):
         # Frame derecho (Espectro)
         spectrum_frame = QFrame()
         spectrum_frame.setFrameStyle(QFrame.Box | QFrame.Raised)
-        spectrum_frame.setFixedSize(int(ancho_spectral*0.70), int(alto_spectral*0.70))
+        spectrum_frame.setFixedSize(int(ancho_spectral*0.55), int(alto_spectral*0.70))
         spectrum_layout = QVBoxLayout(spectrum_frame)
         
         # Añadir los frames al layout principal
