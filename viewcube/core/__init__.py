@@ -1,40 +1,19 @@
-"""Núcleo de la aplicación ViewCube."""
-
-# Importar solo las interfaces públicas principales
-from .domain import (
-    AstronomicalObject,
-    SpectrumData,
-    CubeData,
-    FilterData
-)
-
-from .services import (
-    DataService,
-    FilterService,
-    SonificationService,
-    EventService
-)
-
-# Interfaces principales para extensibilidad
-from .interfaces import (
-    ServiceInterface,
-    PresenterInterface,
-    RepositoryInterface
-)
+"""Núcleo principal de ViewCube."""
+from .domain import *
+from .interfaces.presenter_interfaces import PresenterInterface
+from .interfaces.repository_interfaces import RepositoryInterface
+from .interfaces.service_interfaces import ServiceInterface
+from .services import *
+from .interfaces import *
+from .interfaces.presenter_interfaces import CubePresenterInterface
 
 __all__ = [
-    # Domain Objects
-    "AstronomicalObject",
-    "SpectrumData",
-    "CubeData",
-    "FilterData",
+    # Domain
+    "AstronomicalObject", "SpectrumData", "CubeData", "FilterData",
     # Services
-    "DataService",
-    "FilterService",
-    "SonificationService",
-    "EventService",
-    # Main Interfaces
-    "ServiceInterface",
-    "PresenterInterface",
-    "RepositoryInterface"
+    "DataService", "FilterService", "SonificationService", "EventService",
+    # Interfaces
+    "ServiceInterface", "PresenterInterface", "RepositoryInterface",
+    "CubePresenterInterface", "SpectrumPresenterInterface",
+    "FitsRepositoryInterface", "ConfigRepositoryInterface"
 ]

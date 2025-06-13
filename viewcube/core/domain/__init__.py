@@ -1,36 +1,9 @@
-"""Capa de dominio de ViewCube."""
-
-from .entities import (
-    AstronomicalObject,
-    Observatory,
-    SpatialCoordinate,
-    WavelengthRange,
-    Spaxel,
-    Survey,
-    Instrument,
-    InstrumentType,
-    FiberType
-)
-
-from .models import (
-    CubeData,
-    FilterData,
-    SpectrumData
-)
+"""Modelos y entidades del dominio."""
+from .entities import *
+from .models import *
 
 __all__ = [
-    # Entities
-    "AstronomicalObject",
-    "Observatory",
-    "SpatialCoordinate",
-    "WavelengthRange",
-    "Spaxel",
-    "Survey",
-    "Instrument",
-    "InstrumentType",
-    "FiberType",
-    # Models
-    "CubeData",
-    "FilterData",
-    "SpectrumData"
+    "AstronomicalObject", "SpatialCoordinate", "WavelengthRange",
+    "Spaxel", "Survey", "InstrumentType", "FiberType",
+    "CubeData", "FilterData", "SpectrumData"
 ]

@@ -1,38 +1,13 @@
-"""Interfaces del núcleo de la aplicación."""
-
-from .service_interfaces import (
-    ServiceInterface,
-    DataServiceInterface,
-    FilterServiceInterface,
-    SonificationServiceInterface,
-    EventServiceInterface
-)
-
-from .presenter_interfaces import (
-    PresenterInterface,
-    SpectrumPresenterInterface,
-    CubePresenterInterface
-)
-
-from .repository_interfaces import (
-    RepositoryInterface,
-    FitsRepositoryInterface,
-    ConfigRepositoryInterface
-)
+"""Interfaces principales del sistema."""
+from .repository_interfaces import FitsRepositoryInterface, ConfigRepositoryInterface
+from .service_interfaces import DataServiceInterface, FilterServiceInterface
+from .presenter_interfaces import SpectrumPresenterInterface, CubePresenterInterface
 
 __all__ = [
-    # Service Interfaces
-    "ServiceInterface",
+    "FitsRepositoryInterface",
+    "ConfigRepositoryInterface",
     "DataServiceInterface",
     "FilterServiceInterface",
-    "SonificationServiceInterface",
-    "EventServiceInterface",
-    # Presenter Interfaces
-    "PresenterInterface",
     "SpectrumPresenterInterface",
-    "CubePresenterInterface",
-    # Repository Interfaces
-    "RepositoryInterface",
-    "FitsRepositoryInterface",
-    "ConfigRepositoryInterface"
+    "CubePresenterInterface"
 ]
