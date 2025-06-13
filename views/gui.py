@@ -119,6 +119,8 @@ class MainWindow(QMainWindow):
         logger.setLevel('DEBUG')
         logger.addHandler(handler)
 
+        log.debug('Initializing MainWindow')
+
         # values
         self.btn_search_comp_fits = None
         self.comp_file_name_box = None
@@ -176,6 +178,8 @@ class MainWindow(QMainWindow):
 
     def setup_menu(self):
         menubar = self.menuBar()
+
+        log.debug('Setting up the main menu bar')
 
         # Menú Archivo
         file_menu = menubar.addMenu(strings.FILE_MENU)
@@ -448,6 +452,8 @@ class MainWindow(QMainWindow):
         layout.addLayout(config_file_layout)
         layout.addLayout(load_layout)
 
+        log.debug('Configuration panel set up successfully')
+
     def setup_workspace_panel(self, layout):
         """Configura el panel de trabajo"""
         # Área de gráficos
@@ -483,6 +489,7 @@ class MainWindow(QMainWindow):
         # Guardar referencias a los layouts para usar más tarde
         self.spaxel_layout = spaxel_layout
         self.spectrum_layout = spectrum_layout
+        log.debug('Workspace panel set up successfully')
 
     def connect_menu_actions(self):
         """Conecta las acciones del menú con sus funciones correspondientes"""
@@ -535,9 +542,11 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(strings.WINDOW_TITLE)
 
     def show_window_manager(self):
-        """Muestra el administrador de ventanas"""
         if self.cube:
+            log.debug('Showing window manager')
             self.cube.WindowManager()
+        else:
+            log.warning('No cube loaded, cannot show window manager')
 
     def show_lambda_limits(self):
         """Muestra el diálogo de límites lambda"""
