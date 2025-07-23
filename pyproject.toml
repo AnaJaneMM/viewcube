@@ -22,6 +22,10 @@ classifiers = [
 dependencies = [
     "numpy",
     "astropy",
+    "matplotlib",
+    "pyqtgraph",
+    "PyQt5",
+    "setuptools"
 ]
 
 [project.optional-dependencies]
