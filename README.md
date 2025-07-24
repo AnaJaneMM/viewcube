@@ -71,6 +71,40 @@ pip install viewcube
 
 For more information, visit the [ViewCube PyPI page](https://pypi.org/project/ViewCube/).
 
+## Instalación local y uso de ViewCube
+
+En la carpeta donde quieras trabajar, crea un entorno virtual para Python con la siguiente instrucción:
+```bash
+python -m venv proyecto
+```
+
+Navegue y active el entorno virtual con las siguientes instrucciones:
+```bash
+cd proyecto
+./activate
+```
+
+Ahora, clone el repositorio dentro del entorno virtual, tal que así:
+```bash
+git clone https://github.com/AnaJaneMM/viewcube.git
+```
+> Tanto la rama `main` como `develop` contienen el código funcional.
+
+Instala el programa mediante
+```bash
+cd proyecto
+cd viewcube
+pip install .
+```
+
+Esto instalará todas las dependencias que se han establecido en el fichero `pyproject.toml`.
+
+Abre, desde tu IDE preferido (aunque recomendamos PyCharm) la carpeta `proyecto/viewcube`. Pulsa en el botón verde de 'Ejecutar' y se abrirá el entorno gráfico.
+![gui de ejemplo](/gui.png)
+
+
+Para abrir un fichero FITS, pulsa a la izquierda en 'Fichero FITS principal' y selecciona uno desde el explorador. Ahora, abajo del todo pulsa en el botón "Cargar". Aparecerá una ventana con la información del ficheor y luego, se mostrarán ambas gráficas en pantalla.
+
 ## Documentation
 
 For detailed instructions and information, consult the ViewCube documentation:
