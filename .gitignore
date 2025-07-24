@@ -2,4 +2,4 @@ ViewCube.egg-info/
 .idea
 build/
 __pycache__/
-config/__pycache__/
+config/
