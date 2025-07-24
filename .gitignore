@@ -1,5 +1,17 @@
-ViewCube.egg-info/
-.idea
-build/
+# Archivos de Python compilados
 __pycache__/
-config/
+*.py[cod]
+
+# Metadatos de setuptools
+*.egg-info/
+dist/
+build/
+
+# Entornos virtuales
+venv/
+.env/
+.venv/
+
+# Configs de IDEs
+.idea/
+.vscode/
