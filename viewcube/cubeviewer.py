@@ -21,6 +21,8 @@ from viewcube.utils import save_spec, convert2iraf_spec, get_min_max
 import astropy.io.fits as pyfits
 from astropy import units as u
 from astropy.wcs import WCS
+import logging as log
+import colorlog
 import numpy as np
 import itertools
 import string
@@ -180,12 +182,23 @@ class CubeViewer(QWidget):
         **kwargs
     ):
         super().__init__()
+
+        # log functionality
+        handler = colorlog.StreamHandler()
+        handler.setFormatter(colorlog.ColoredFormatter(
+            settings.FMT_LOG,
+            log_colors={'DEBUG': 'cyan', 'INFO': 'green', 'WARNING': 'yellow', 'ERROR': 'red', 'CRITICAL': 'bold_red'}
+        ))
+        logger = colorlog.getLogger()
+        logger.setLevel('DEBUG')
+        logger.addHandler(handler)
         
         # Guardar parámetros básicos
         self.name_fits = name_fits
         self.ptable = ptable
         self.fitscom = fitscom
         self.kwargs = kwargs
+        log.debug('CubeViewer initialized with parameters: ' + str(name_fits) + str(kwargs))
         
         # Guardar configuración de visualización
         self.show_colorbar = colorbar  # Renombramos para evitar conflicto
@@ -236,6 +249,7 @@ class CubeViewer(QWidget):
                 exflag=self.kwargs.get('exflag'),
                 ivar=self.kwargs.get('ivar', False)
             )
+            log.debug('Loaded FITS data from: ' + self.name_fits + ' with parameters: ' + str(self.fits_data))
             
             # Inicializar dimensiones
             if self.fits_data is not None and self.fits_data.data is not None:
@@ -271,6 +285,7 @@ class CubeViewer(QWidget):
             
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error cargando archivo FITS: {str(e)}")
+            log.critical('Error loading FITS file: ' + str(e))
             
     def update_visualizations(self):
         """Actualiza las visualizaciones de spaxel y espectro"""
