@@ -102,7 +102,6 @@ Esto instalará todas las dependencias que se han establecido en el fichero `pyp
 Abre, desde tu IDE preferido (aunque recomendamos PyCharm) la carpeta `proyecto/viewcube`. Pulsa en el botón verde de 'Ejecutar' y se abrirá el entorno gráfico.
 ![gui de ejemplo](/gui.png)
 
-
 Para abrir un fichero FITS, pulsa a la izquierda en 'Fichero FITS principal' y selecciona uno desde el explorador. Ahora, abajo del todo pulsa en el botón "Cargar". Aparecerá una ventana con la información del ficheor y luego, se mostrarán ambas gráficas en pantalla.
 
 ## Documentation
