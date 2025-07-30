@@ -1,9 +1,7 @@
 import pyqtgraph as pg
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QDialog, QVBoxLayout, QPushButton, QLabel, QDoubleSpinBox
+from PyQt5.QtWidgets import QDialog, QVBoxLayout, QPushButton, QLabel, QDoubleSpinBox
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor
 import numpy as np
-from astropy.io import fits
 
 # Configuración global de pyqtgraph
 pg.setConfigOption('background', 'w')

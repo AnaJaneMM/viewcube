@@ -12,24 +12,16 @@ VERSION = "0.3.6"                                                          #
 ############################################################################
 #
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
-                            QLabel, QSpinBox, QComboBox, QFileDialog, QMessageBox, QGroupBox)
-from PyQt5.QtCore import Qt, QRectF, QPointF
-from PyQt5.QtGui import QColor, QPen, QBrush
+                            QLabel, QSpinBox, QFileDialog, QMessageBox, QGroupBox)
 import pyqtgraph as pg
-from viewcube.utils import lsfiles, ckfiles, LoadFits, image_max_pixel
-from viewcube.utils import save_spec, convert2iraf_spec, get_min_max
+from viewcube.utils import lsfiles, LoadFits
 import astropy.io.fits as pyfits
-from astropy import units as u
-from astropy.wcs import WCS
 import logging as log
 import colorlog
 import numpy as np
-import itertools
 import string
 import random
-import math
-import sys
-import os
+from config import settings
 
 # Configuración global de pyqtgraph
 pg.setConfigOption('background', 'w')
